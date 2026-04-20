@@ -13,7 +13,7 @@ npm install
 npm install node-cron
 
 # 4. Start the CAP server
-cds watch
+npm start
 ```
 
 ## You will see this in terminal:

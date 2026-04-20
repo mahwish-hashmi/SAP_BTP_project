@@ -13,7 +13,7 @@
     "sqlite3": "^5.1.7"
   },
   "scripts": {
-    "start": "cds-serve",
+    "start": "cds watch",
     "dev": "cds watch",
     "build": "cds build --production"
   },
@@ -31,3 +31,5 @@
     }
   }
 }
+
+"test123": "hello"
