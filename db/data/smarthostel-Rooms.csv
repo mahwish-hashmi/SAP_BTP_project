@@ -1,0 +1,16 @@
+ID,roomNumber,block,floor,type,capacity,occupied,status,monthlyRent,isACRoom
+r-001,A-101,BlockA_Boys,1,NonAC_Double,2,2,Occupied,8000,false
+r-002,A-102,BlockA_Boys,1,NonAC_Double,2,1,Occupied,8000,false
+r-003,A-108,BlockA_Boys,1,NonAC_Double,2,0,Vacant,8000,false
+r-004,A-110,BlockA_Boys,1,NonAC_Single,1,0,Vacant,9500,false
+r-005,A-215,BlockA_Boys,2,NonAC_Single,1,1,Occupied,9500,false
+r-006,B-112,BlockB_Girls,1,NonAC_Double,2,2,Occupied,8000,false
+r-007,B-204,BlockB_Girls,2,AC_Double,2,1,Occupied,12000,true
+r-008,B-305,BlockB_Girls,3,AC_Single,1,0,Maintenance,14000,true
+r-009,B-310,BlockB_Girls,3,NonAC_Double,2,0,Vacant,8000,false
+r-010,C-101,BlockC_PG,1,NonAC_Single,1,1,Occupied,9000,false
+r-011,C-210,BlockC_PG,2,NonAC_Double,2,2,Occupied,8500,false
+r-012,C-305,BlockC_PG,3,NonAC_Single,1,1,Occupied,9000,false
+r-013,D-101,BlockD_Premium,1,AC_Single,1,1,Occupied,16000,true
+r-014,D-102,BlockD_Premium,1,AC_Single,1,1,Occupied,16000,true
+r-015,D-201,BlockD_Premium,2,AC_Double,2,0,Vacant,13000,true

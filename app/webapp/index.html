@@ -1,0 +1,1640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartHostel BTP — SAP CAP Live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── SAP Horizon Design Tokens ── */
+:root {
+  --sap:      #0070F2; --sap-dk:  #0040B0; --sap-lt:  #E8F2FF;
+  --shell:    #1B2742; --shell2:  #243352;
+  --pos:      #107E3E; --pos-lt:  #EAF5EE;
+  --warn:     #E67A00; --warn-lt: #FEF3E4;
+  --neg:      #BF0000; --neg-lt:  #FFEAEA;
+  --neutral:  #F5F6F8; --border:  #C8C8C8;
+  --text:     #1C2025; --muted:   #556068;
+  --mono:     'IBM Plex Mono', monospace;
+  --font:     'IBM Plex Sans', sans-serif;
+  --r:        6px; --rl: 8px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background: #E8EAED; color: var(--text); font-size: 14px; }
+
+/* ── Shell ── */
+.shellbar {
+  background: var(--shell); height: 44px;
+  display: flex; align-items: center; padding: 0 16px; gap: 12px;
+  position: sticky; top: 0; z-index: 1000;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.sap-badge { background: #fff; color: var(--shell); font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 3px; letter-spacing: .5px; }
+.shell-title { color: rgba(255,255,255,.9); font-size: 14px; font-weight: 500; }
+.shell-sep { width: 1px; height: 20px; background: rgba(255,255,255,.15); }
+.shell-subtitle { color: rgba(255,255,255,.45); font-size: 12px; }
+.shell-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.conn-dot { width: 7px; height: 7px; border-radius: 50%; background: #6B7280; transition: background .3s; }
+.conn-dot.live { background: #22c55e; }
+.conn-dot.demo { background: #f59e0b; }
+.conn-label { font-size: 11px; color: rgba(255,255,255,.5); }
+.shell-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--sap); color: #fff; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+/* ── Navigation ── */
+.navbar { background: #fff; border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; scrollbar-width: none; }
+.navtab { padding: 11px 16px; font-size: 13px; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: all .15s; display: flex; align-items: center; gap: 6px; }
+.navtab:hover { color: var(--sap); background: var(--sap-lt); }
+.navtab.on { color: var(--sap); border-bottom-color: var(--sap); font-weight: 500; }
+.nbadge { background: var(--neg); color: #fff; font-size: 9px; padding: 1px 5px; border-radius: 8px; font-weight: 700; }
+
+/* ── Layout ── */
+.main { padding: 16px 20px; max-width: 1380px; margin: 0 auto; }
+.page { display: none; } .page.on { display: block; }
+
+/* ── Status strip ── */
+.strip {
+  padding: 8px 14px; border-radius: var(--r); font-size: 12.5px;
+  display: flex; align-items: center; gap: 8px; margin-bottom: 14px;
+}
+.strip code { background: rgba(0,0,0,.08); padding: 1px 5px; border-radius: 3px; font-family: var(--mono); font-size: 11.5px; }
+.s-info  { background: var(--sap-lt); color: var(--sap);  border: 1px solid #B5D4F4; }
+.s-ok    { background: var(--pos-lt); color: var(--pos);  border: 1px solid #A0D4B2; }
+.s-warn  { background: var(--warn-lt); color: var(--warn); border: 1px solid #FAC775; }
+.s-live  { background: #ECFDF5; color: #065f46; border: 1px solid #6EE7B7; }
+.s-demo  { background: #FFFBEB; color: #92400e; border: 1px solid #FCD34D; }
+
+/* ── Cards ── */
+.card { background: #fff; border: 1px solid var(--border); border-radius: var(--rl); overflow: hidden; margin-bottom: 14px; }
+.ch { padding: 12px 16px; border-bottom: 1px solid #F0F0F0; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ct { font-size: 14px; font-weight: 600; }
+.csub { font-size: 11.5px; color: var(--muted); margin-top: 1px; }
+.cb { padding: 14px 16px; }
+.cb-flush { }
+
+/* ── Grid ── */
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.g4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+@media(max-width:900px) { .g2,.g3,.g4 { grid-template-columns:1fr; } }
+
+/* ── KPI Tiles ── */
+.kgrid { display: grid; grid-template-columns: repeat(auto-fill,minmax(150px,1fr)); gap: 12px; margin-bottom: 16px; }
+.ktile { background:#fff; border:1px solid var(--border); border-radius:var(--r); padding:12px 14px; cursor:pointer; transition:all .15s; position:relative; overflow:hidden; }
+.ktile::after { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+.ktile.blue::after { background:var(--sap); }
+.ktile.green::after { background:var(--pos); }
+.ktile.amber::after { background:var(--warn); }
+.ktile.red::after { background:var(--neg); }
+.ktile:hover { transform:translateY(-1px); box-shadow:0 4px 14px rgba(0,0,0,.1); }
+.kl { font-size:11px; color:var(--muted); font-weight:500; text-transform:uppercase; letter-spacing:.4px; margin-bottom:5px; }
+.kv { font-size:24px; font-weight:300; font-family:var(--mono); }
+.kv.blue { color:var(--sap); } .kv.green { color:var(--pos); } .kv.amber { color:var(--warn); } .kv.red { color:var(--neg); }
+.ks { font-size:11px; color:var(--muted); margin-top:3px; }
+
+/* ── Table ── */
+.tbl { width:100%; border-collapse:collapse; font-size:13px; table-layout:fixed; }
+.tbl th { padding:8px 12px; text-align:left; font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; border-bottom:1.5px solid var(--border); background:var(--neutral); white-space:nowrap; }
+.tbl td { padding:9px 12px; border-bottom:1px solid #F0F0F0; color:var(--text); vertical-align:middle; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.tbl tr:hover td { background:var(--sap-lt); }
+.tbl tr:last-child td { border-bottom:none; }
+
+/* ── Badges ── */
+.badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:10px; font-size:11.5px; font-weight:500; white-space:nowrap; }
+.badge::before { content:''; width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+.b-pos  { background:var(--pos-lt);  color:var(--pos);  } .b-pos::before  { background:var(--pos);  }
+.b-warn { background:var(--warn-lt); color:var(--warn); } .b-warn::before { background:var(--warn); }
+.b-neg  { background:var(--neg-lt);  color:var(--neg);  } .b-neg::before  { background:var(--neg);  }
+.b-info { background:var(--sap-lt);  color:var(--sap);  } .b-info::before { background:var(--sap);  }
+.b-neu  { background:var(--neutral); color:var(--muted);} .b-neu::before  { background:var(--muted); }
+
+/* ── Buttons ── */
+.btn { display:inline-flex; align-items:center; gap:5px; padding:6px 14px; font-size:13px; font-weight:500; font-family:var(--font); border-radius:var(--r); cursor:pointer; border:1px solid; transition:all .14s; }
+.btn-p  { background:var(--sap); color:#fff; border-color:var(--sap); }
+.btn-p:hover { background:var(--sap-dk); border-color:var(--sap-dk); }
+.btn-s  { background:#fff; color:var(--sap); border-color:var(--sap); }
+.btn-s:hover { background:var(--sap-lt); }
+.btn-g  { background:transparent; color:var(--muted); border-color:var(--border); }
+.btn-g:hover { background:var(--neutral); color:var(--text); }
+.btn-ok { background:var(--pos); color:#fff; border-color:var(--pos); }
+.btn-ok:hover { background:#0a6030; }
+.btn-danger { background:#fff; color:var(--neg); border-color:var(--neg); }
+.btn-sm { padding:4px 10px; font-size:12px; }
+
+/* ── Form ── */
+.fgrid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.fgroup { display:flex; flex-direction:column; gap:4px; }
+.fgroup.span2 { grid-column:1/-1; }
+label { font-size:12px; font-weight:500; color:var(--muted); }
+input[type=text], input[type=number], input[type=date], input[type=email], input[type=time], select, textarea {
+  padding:7px 10px; border:1px solid var(--border); border-radius:var(--r);
+  font-family:var(--font); font-size:13px; color:var(--text); background:#fff; outline:none;
+  transition:border-color .15s, box-shadow .15s;
+}
+input:focus, select:focus, textarea:focus { border-color:var(--sap); box-shadow:0 0 0 2px rgba(0,112,242,.12); }
+textarea { resize:vertical; min-height:70px; }
+
+/* ── Process flow ── */
+.procflow { display:flex; align-items:center; overflow-x:auto; padding:8px 0; gap:0; scrollbar-width:none; }
+.pnode { display:flex; flex-direction:column; align-items:center; gap:4px; min-width:70px; }
+.pcircle { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; border:2px solid; }
+.pc-done { background:var(--pos); border-color:var(--pos); color:#fff; }
+.pc-cur  { background:var(--sap); border-color:var(--sap); color:#fff; }
+.pc-pend { background:#fff; border-color:var(--border); color:var(--muted); }
+.plabel  { font-size:10px; color:var(--muted); text-align:center; line-height:1.3; max-width:70px; }
+.plabel.act { color:var(--sap); font-weight:600; }
+.parrow { flex:1; height:2px; min-width:16px; margin-bottom:18px; }
+.pa-done { background:var(--pos); } .pa-pend { background:var(--border); }
+
+/* ── Progress bar ── */
+.pbar { background:#EDEDED; border-radius:3px; height:6px; overflow:hidden; margin-top:4px; }
+.pfill { height:100%; border-radius:3px; transition:width .5s; }
+.pf-blue { background:var(--sap); } .pf-green { background:var(--pos); }
+.pf-amber { background:var(--warn); } .pf-red { background:var(--neg); }
+
+/* ── Complaint cards ── */
+.ccard { border:1px solid var(--border); border-radius:var(--r); padding:12px 14px; margin-bottom:9px; background:#fff; cursor:pointer; transition:all .15s; border-left:4px solid; }
+.ccard:hover { box-shadow:0 2px 12px rgba(0,0,0,.1); transform:translateX(2px); }
+.ccard.Critical { border-left-color:var(--neg); }
+.ccard.High     { border-left-color:var(--warn); }
+.ccard.Medium   { border-left-color:var(--sap); }
+.ccard.Low      { border-left-color:var(--pos); }
+.ccard.SLABreached { animation:slapulse 1.8s infinite; }
+@keyframes slapulse { 0%,100%{box-shadow:0 0 0 0 rgba(191,0,0,0)} 50%{box-shadow:0 0 0 4px rgba(191,0,0,.2)} }
+
+/* ── Room grid ── */
+.rgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:8px; }
+.rcell { border:1.5px solid; border-radius:var(--r); padding:8px 6px; text-align:center; cursor:pointer; transition:all .15s; font-size:12px; }
+.rcell:hover { transform:scale(1.06); }
+.rcell.Occupied    { border-color:var(--sap);  background:var(--sap-lt);  color:var(--sap);  }
+.rcell.Vacant      { border-color:var(--pos);  background:var(--pos-lt);  color:var(--pos);  }
+.rcell.Maintenance { border-color:var(--warn); background:var(--warn-lt); color:var(--warn); }
+
+/* ── Bar chart ── */
+.barchart { display:flex; align-items:flex-end; gap:10px; height:100px; border-bottom:1px solid var(--border); padding-bottom:4px; }
+.barcol { display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; }
+.barfill { width:100%; border-radius:2px 2px 0 0; min-height:4px; transition:height .5s; }
+.barlbl { font-size:10.5px; color:var(--muted); }
+.barval { font-size:10.5px; font-weight:600; color:var(--muted); }
+
+/* ── Job cards ── */
+.jobcard { background:#fff; border:1px solid var(--border); border-radius:var(--r); padding:12px 14px; margin-bottom:9px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.jname { font-size:13px; font-weight:500; }
+.jcron { font-size:11px; color:var(--muted); font-family:var(--mono); margin-top:2px; }
+.running { width:7px; height:7px; border-radius:50%; background:var(--pos); animation:blink 1.2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+/* ── Log area ── */
+.logbox { background:var(--neutral); border-radius:var(--r); padding:10px 12px; font-family:var(--mono); font-size:11.5px; max-height:200px; overflow-y:auto; }
+.logline { margin-bottom:3px; line-height:1.5; }
+
+/* ── Modal ── */
+.overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:2000; align-items:center; justify-content:center; }
+.overlay.open { display:flex; }
+.modal { background:#fff; border-radius:10px; width:500px; max-width:95vw; max-height:88vh; overflow-y:auto; box-shadow:0 8px 40px rgba(0,0,0,.2); animation:modIn .2s cubic-bezier(.34,1.56,.64,1); }
+@keyframes modIn { from{opacity:0;transform:scale(.93) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+.mhead { padding:16px 20px; border-bottom:1px solid #F0F0F0; display:flex; align-items:center; justify-content:space-between; }
+.mtitle { font-size:15px; font-weight:600; }
+.mclose { cursor:pointer; color:var(--muted); font-size:20px; line-height:1; }
+.mclose:hover { color:var(--neg); }
+.mbody { padding:18px 20px; }
+.mfoot { padding:12px 20px; border-top:1px solid #F0F0F0; display:flex; gap:8px; justify-content:flex-end; }
+.minfo { background:var(--sap-lt); color:var(--sap); border-radius:var(--r); padding:8px 12px; font-size:12px; margin-bottom:14px; font-family:var(--mono); }
+
+/* ── Toast ── */
+#toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--shell); color:#fff; padding:10px 22px; border-radius:24px; font-size:13.5px; display:none; z-index:9999; white-space:nowrap; border-left:3px solid var(--pos); animation:tin .2s ease; }
+@keyframes tin { from{opacity:0;bottom:12px} to{opacity:1;bottom:24px} }
+
+/* ── Loading spinner ── */
+.spinner { display:none; text-align:center; padding:24px; color:var(--muted); font-size:13px; }
+.spin { width:20px; height:20px; border:2px solid var(--border); border-top-color:var(--sap); border-radius:50%; animation:spin .7s linear infinite; display:inline-block; margin-right:8px; vertical-align:middle; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+.alloc-box { background:var(--pos-lt); border:1px solid var(--pos); border-radius:var(--r); padding:12px 14px; margin-top:10px; display:none; }
+.fin-row { display:flex; justify-content:space-between; font-size:13px; padding:5px 0; border-bottom:1px solid #F0F0F0; }
+.fin-row:last-child { border-bottom:none; font-weight:600; }
+.stat4 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.scard { background:var(--neutral); border-radius:var(--r); padding:10px; text-align:center; }
+.sval { font-size:22px; font-weight:300; font-family:var(--mono); }
+.slbl { font-size:11px; margin-top:2px; }
+</style>
+</head>
+<body>
+
+<!-- ── Shell Bar ── -->
+<div class="shellbar">
+  <span class="sap-badge">SAP</span>
+  <span class="shell-title">SmartHostel</span>
+  <div class="shell-sep"></div>
+  <span class="shell-subtitle">BTP · CAP Node.js · OData V4</span>
+  <div class="shell-right">
+    <div class="conn-dot" id="connDot"></div>
+    <span class="conn-label" id="connLabel">Connecting…</span>
+    <div class="shell-avatar" title="Admin | KIIT">AD</div>
+  </div>
+</div>
+
+<!-- ── Navigation ── -->
+<div class="navbar">
+  <div class="navtab on" onclick="go('dashboard',this)">⊞ Dashboard</div>
+  <div class="navtab" onclick="go('students',this)">👤 Students <span style="font-size:11px;color:var(--muted)">(H2R)</span></div>
+  <div class="navtab" onclick="go('rooms',this)">🏠 Rooms</div>
+  <div class="navtab" onclick="go('payments',this)">₹ Payments <span style="font-size:11px;color:var(--muted)">(O2C)</span></div>
+  <div class="navtab" onclick="go('complaints',this)">⚠ Complaints <span class="nbadge" id="cmp-badge">?</span></div>
+  <div class="navtab" onclick="go('procurement',this)">📦 Procurement <span style="font-size:11px;color:var(--muted)">(P2P)</span></div>
+  <div class="navtab" onclick="go('reports',this)">📊 Reports <span style="font-size:11px;color:var(--muted)">(R2R)</span></div>
+  <div class="navtab" onclick="go('visitors',this)">🪪 Visitors</div>
+  <div class="navtab" onclick="go('jobs',this)">⚙ Jobs</div>
+</div>
+
+<div class="main">
+
+<!-- ═══════════ DASHBOARD ═══════════ -->
+<div class="page on" id="page-dashboard">
+  <div class="strip s-demo" id="conn-strip">
+    ⏳ Checking backend connection to <code>http://localhost:4004/odata/v4/HostelService/</code>…
+  </div>
+
+  <div class="kgrid" id="kpi-grid">
+    <div class="ktile blue"><div class="kl">Total Students</div><div class="kv blue" id="k-students">—</div><div class="ks">Active this semester</div></div>
+    <div class="ktile green"><div class="kl">Occupancy Rate</div><div class="kv green" id="k-occ">—</div><div class="ks">Current semester</div></div>
+    <div class="ktile amber"><div class="kl">Pending Fees</div><div class="kv amber" id="k-fees">—</div><div class="ks">Outstanding balance</div></div>
+    <div class="ktile red"><div class="kl">Open Complaints</div><div class="kv red" id="k-cmp">—</div><div class="ks">Require attention</div></div>
+    <div class="ktile green"><div class="kl">Monthly Revenue</div><div class="kv green" id="k-rev">—</div><div class="ks">April 2025</div></div>
+    <div class="ktile blue"><div class="kl">Collection Rate</div><div class="kv blue" id="k-coll">—</div><div class="ks">This month</div></div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">Block occupancy</div><div class="csub" id="occ-src">Loading…</div></div>
+      <div class="cb" id="occ-bars">
+        <div class="spinner"><span class="spin"></span>Loading rooms…</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Recent activity</div><div class="csub">Live from Logs entity</div></div>
+      <div class="cb" id="activity-log" style="padding:0">
+        <div class="spinner" style="display:block"><span class="spin"></span>Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ct">SAP BTP tech stack</div></div>
+    <div class="cb">
+      <div style="display:flex;flex-wrap:wrap;gap:7px">
+        <span style="background:var(--shell);color:#90C0FF;font-size:11.5px;padding:4px 12px;border-radius:20px">☁ SAP BTP Cloud Foundry</span>
+        <span style="background:var(--shell);color:#90C0FF;font-size:11.5px;padding:4px 12px;border-radius:20px">⚙ SAP CAP Node.js</span>
+        <span style="background:var(--shell);color:#90C0FF;font-size:11.5px;padding:4px 12px;border-radius:20px">🗄 SAP HANA Cloud</span>
+        <span style="background:var(--shell);color:#90C0FF;font-size:11.5px;padding:4px 12px;border-radius:20px">🎨 SAP Fiori / UI5</span>
+        <span style="background:var(--shell);color:#90C0FF;font-size:11.5px;padding:4px 12px;border-radius:20px">📡 OData V4</span>
+        <span style="background:var(--shell);color:#90C0FF;font-size:11.5px;padding:4px 12px;border-radius:20px">🔐 XSUAA</span>
+        <span style="background:var(--shell);color:#90C0FF;font-size:11.5px;padding:4px 12px;border-radius:20px">📦 MTA Deploy</span>
+        <span style="background:var(--shell);color:#90C0FF;font-size:11.5px;padding:4px 12px;border-radius:20px">⏰ node-cron Jobs</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ STUDENTS ═══════════ -->
+<div class="page" id="page-students">
+  <div class="strip s-info">ℹ <code>GET /Students?$expand=room</code> · BEFORE hook auto-generates Student ID · Duplicate email check</div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="ch"><div class="ct">H2R student lifecycle</div></div>
+    <div class="cb">
+      <div class="procflow">
+        <div class="pnode"><div class="pcircle pc-done">✓</div><div class="plabel">Register</div></div>
+        <div class="parrow pa-done"></div>
+        <div class="pnode"><div class="pcircle pc-done">✓</div><div class="plabel">KYC</div></div>
+        <div class="parrow pa-done"></div>
+        <div class="pnode"><div class="pcircle pc-done">✓</div><div class="plabel">Room alloc</div></div>
+        <div class="parrow pa-done"></div>
+        <div class="pnode"><div class="pcircle pc-done">✓</div><div class="plabel">Fee setup</div></div>
+        <div class="parrow pa-done"></div>
+        <div class="pnode"><div class="pcircle pc-cur">●</div><div class="plabel act">Active</div></div>
+        <div class="parrow pa-pend"></div>
+        <div class="pnode"><div class="pcircle pc-pend">6</div><div class="plabel">Checkout</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch">
+      <div><div class="ct">Student master</div><div class="csub"><span id="stu-count">—</span> records from DB</div></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="text" placeholder="Search name or ID…" style="width:180px" id="stu-search" oninput="searchStudents(this.value)">
+        <button class="btn btn-p btn-sm" onclick="openModal('modal-student')">+ Onboard Student</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead><tr><th style="width:80px">ID</th><th>Name</th><th>Course</th><th style="width:50px">Yr</th><th style="width:80px">Room</th><th style="width:70px">Fee</th><th style="width:70px">Status</th><th style="width:90px">Action</th></tr></thead>
+        <tbody id="stu-tbody"><tr><td colspan="8" class="spinner" style="display:table-cell;text-align:center"><span class="spin"></span>Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ ROOMS ═══════════ -->
+<div class="page" id="page-rooms">
+  <div class="g2">
+    <div class="card">
+      <div class="ch">
+        <div><div class="ct">Room map — live from DB</div><div class="csub" id="room-map-src">Loading…</div></div>
+        <button class="btn btn-p btn-sm" onclick="openModal('modal-allocate')">▶ Smart Allocate</button>
+      </div>
+      <div class="cb">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-size:12px">
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:var(--sap-lt);border:1.5px solid var(--sap);border-radius:2px"></span>Occupied</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:var(--pos-lt);border:1.5px solid var(--pos);border-radius:2px"></span>Vacant</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:var(--warn-lt);border:1.5px solid var(--warn);border-radius:2px"></span>Maintenance</span>
+        </div>
+        <div class="rgrid" id="room-grid"><div class="spinner" style="display:block"><span class="spin"></span></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Room summary</div></div>
+      <div class="cb">
+        <div class="stat4" id="room-stats">
+          <div class="scard"><div class="sval" id="rs-occ" style="color:var(--sap)">—</div><div class="slbl" style="color:var(--sap)">Occupied</div></div>
+          <div class="scard"><div class="sval" id="rs-vac" style="color:var(--pos)">—</div><div class="slbl" style="color:var(--pos)">Vacant</div></div>
+          <div class="scard"><div class="sval" id="rs-mnt" style="color:var(--warn)">—</div><div class="slbl" style="color:var(--warn)">Maintenance</div></div>
+          <div class="scard"><div class="sval" id="rs-rate" style="color:var(--neg)">—</div><div class="slbl" style="color:var(--neg)">Occupancy %</div></div>
+        </div>
+        <div style="margin-top:14px">
+          <div style="font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:8px">ALLOCATION SCORING WEIGHTS</div>
+          <div style="font-size:12.5px;color:var(--text);line-height:1.7">
+            Type match <strong>+30</strong> · Floor pref <strong>+15</strong> · Block pref <strong>+10</strong><br>
+            AC required <strong>+5</strong> · Vacancy ratio <strong>+5</strong> · Base <strong>+35</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch">
+      <div><div class="ct">All rooms</div></div>
+      <button class="btn btn-p btn-sm" onclick="openModal('modal-room')">+ Add Room</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead><tr><th style="width:80px">Room</th><th>Block</th><th>Type</th><th style="width:50px">Cap</th><th style="width:50px">Occ</th><th style="width:90px">Status</th><th style="width:90px">Rent/mo</th></tr></thead>
+        <tbody id="rooms-tbody"><tr><td colspan="7" style="text-align:center;padding:20px;color:var(--muted)"><span class="spin"></span> Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ PAYMENTS ═══════════ -->
+<div class="page" id="page-payments">
+  <div class="strip s-info">ℹ O2C: <code>POST /markPaymentPaid</code> → receipt auto-gen → FI-AR student feeStatus sync</div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="ch"><div class="ct">O2C process flow</div></div>
+    <div class="cb">
+      <div class="procflow">
+        <div class="pnode"><div class="pcircle pc-done">✓</div><div class="plabel">Invoice created</div></div>
+        <div class="parrow pa-done"></div>
+        <div class="pnode"><div class="pcircle pc-done">✓</div><div class="plabel">Sent to student</div></div>
+        <div class="parrow pa-done"></div>
+        <div class="pnode"><div class="pcircle pc-cur">●</div><div class="plabel act">Payment</div></div>
+        <div class="parrow pa-pend"></div>
+        <div class="pnode"><div class="pcircle pc-pend">4</div><div class="plabel">Receipt issued</div></div>
+        <div class="parrow pa-pend"></div>
+        <div class="pnode"><div class="pcircle pc-pend">5</div><div class="plabel">FI-AR updated</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kgrid" style="margin-bottom:14px">
+    <div class="ktile green"><div class="kl">Collected (Apr)</div><div class="kv green" id="pk-paid">—</div><div class="ks">This month</div></div>
+    <div class="ktile amber"><div class="kl">Pending</div><div class="kv amber" id="pk-pending">—</div><div class="ks">Unpaid</div></div>
+    <div class="ktile red"><div class="kl">Overdue</div><div class="kv red" id="pk-overdue">—</div><div class="ks">Past due date</div></div>
+    <div class="ktile blue"><div class="kl">Total Invoices</div><div class="kv blue" id="pk-total">—</div><div class="ks">In database</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch">
+      <div><div class="ct">Payment ledger</div><div class="csub">Live from <code>/Payments?$expand=student</code></div></div>
+      <div style="display:flex;gap:8px">
+        <select id="pay-filter" style="font-size:12.5px" onchange="loadPayments(this.value)">
+          <option value="">All Status</option><option value="Paid">Paid</option>
+          <option value="Pending">Pending</option><option value="Overdue">Overdue</option>
+        </select>
+        <button class="btn btn-p btn-sm" onclick="openModal('modal-payment')">+ Record Payment</button>
+        <button class="btn btn-s btn-sm" onclick="genInvoices()">⚡ Gen Invoices</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead><tr><th style="width:120px">Invoice #</th><th>Student</th><th style="width:80px">Type</th><th style="width:80px">Amount</th><th style="width:90px">Due Date</th><th style="width:90px">Paid Date</th><th style="width:75px">Status</th><th style="width:100px">Action</th></tr></thead>
+        <tbody id="pay-tbody"><tr><td colspan="8" style="text-align:center;padding:20px;color:var(--muted)">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ COMPLAINTS ═══════════ -->
+<div class="page" id="page-complaints">
+  <div class="strip s-warn">⚠ SLA Engine: Electricity/Security → Critical 4h · Plumbing → High 12h · WiFi → Medium 48h · SLA breach auto-escalates</div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="ch">
+        <div><div class="ct">Priority queue</div><div class="csub">Live from <code>/Complaints</code></div></div>
+        <div style="display:flex;gap:7px">
+          <button class="btn btn-g btn-sm" onclick="loadComplaints('all')">All</button>
+          <button class="btn btn-sm btn-danger" onclick="loadComplaints('Critical')">Critical</button>
+          <button class="btn btn-sm" style="color:var(--warn);border-color:var(--warn)" onclick="loadComplaints('High')">High</button>
+          <button class="btn btn-s btn-sm" onclick="loadComplaints('Medium')">Medium</button>
+          <button class="btn btn-sm btn-ok" onclick="loadComplaints('Low')">Low</button>
+          <button class="btn btn-p btn-sm" onclick="openModal('modal-complaint')">+ Raise</button>
+        </div>
+      </div>
+      <div class="cb" id="cmp-list"><div class="spinner" style="display:block"><span class="spin"></span>Loading…</div></div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><div class="ct">SLA analytics</div></div>
+      <div class="cb">
+        <div id="cmp-bars" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+          <div class="spinner" style="display:block"><span class="spin"></span></div>
+        </div>
+        <div class="stat4">
+          <div class="scard"><div class="sval" style="color:var(--neg)">4h</div><div class="slbl" style="color:var(--neg)">Critical SLA</div></div>
+          <div class="scard"><div class="sval" style="color:var(--warn)">12h</div><div class="slbl" style="color:var(--warn)">High SLA</div></div>
+          <div class="scard"><div class="sval" style="color:var(--sap)">48h</div><div class="slbl" style="color:var(--sap)">Medium SLA</div></div>
+          <div class="scard"><div class="sval" style="color:var(--pos)">120h</div><div class="slbl" style="color:var(--pos)">Low SLA</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ PROCUREMENT ═══════════ -->
+<div class="page" id="page-procurement">
+  <div class="strip s-info">ℹ P2P: PO auto-numbered · GRN + InvoiceRef → <code>threeWayMatch=true</code> (SAP MM concept)</div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="ch"><div class="ct">P2P process flow</div></div>
+    <div class="cb">
+      <div class="procflow">
+        <div class="pnode"><div class="pcircle pc-done">✓</div><div class="plabel">Purchase req.</div></div>
+        <div class="parrow pa-done"></div>
+        <div class="pnode"><div class="pcircle pc-done">✓</div><div class="plabel">PO created</div></div>
+        <div class="parrow pa-done"></div>
+        <div class="pnode"><div class="pcircle pc-cur">●</div><div class="plabel act">Sent to vendor</div></div>
+        <div class="parrow pa-pend"></div>
+        <div class="pnode"><div class="pcircle pc-pend">4</div><div class="plabel">GRN</div></div>
+        <div class="parrow pa-pend"></div>
+        <div class="pnode"><div class="pcircle pc-pend">5</div><div class="plabel">3-Way Match</div></div>
+        <div class="parrow pa-pend"></div>
+        <div class="pnode"><div class="pcircle pc-pend">6</div><div class="plabel">FI-AP payment</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="ch">
+        <div><div class="ct">Purchase orders</div><div class="csub">Live from <code>/PurchaseOrders?$expand=vendor</code></div></div>
+        <button class="btn btn-p btn-sm" onclick="openModal('modal-po')">+ Create PO</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="tbl">
+          <thead><tr><th style="width:110px">PO #</th><th>Vendor</th><th>Item</th><th style="width:80px">Amount</th><th style="width:80px">Status</th><th style="width:60px">3WM</th></tr></thead>
+          <tbody id="po-tbody"><tr><td colspan="6" style="text-align:center;padding:20px;color:var(--muted)">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Vendor master</div><div class="csub">Live from <code>/Vendors</code></div></div>
+      <div style="overflow-x:auto">
+        <table class="tbl">
+          <thead><tr><th>Vendor</th><th>Category</th><th style="width:50px">Rating</th><th style="width:75px">Status</th></tr></thead>
+          <tbody id="vendor-tbody"><tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted)">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ REPORTS (R2R) ═══════════ -->
+<div class="page" id="page-reports">
+  <div class="strip s-ok">✓ R2R: Month-end close complete · <code>getMonthlyReport(month=4,year=2025)</code> · Ready for SAP Analytics Cloud</div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="ch"><div class="ct">R2R process flow</div></div>
+    <div class="cb">
+      <div class="procflow">
+        <div class="pnode"><div class="pcircle pc-done">✓</div><div class="plabel">Data collection</div></div>
+        <div class="parrow pa-done"></div>
+        <div class="pnode"><div class="pcircle pc-done">✓</div><div class="plabel">Journals posted</div></div>
+        <div class="parrow pa-done"></div>
+        <div class="pnode"><div class="pcircle pc-done">✓</div><div class="plabel">Reconciliation</div></div>
+        <div class="parrow pa-done"></div>
+        <div class="pnode"><div class="pcircle pc-done">✓</div><div class="plabel">Month-end close</div></div>
+        <div class="parrow pa-done"></div>
+        <div class="pnode"><div class="pcircle pc-cur">●</div><div class="plabel act">Reports published</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="g3">
+    <div class="card">
+      <div class="ch"><div class="ct">Revenue (Apr 2025)</div><div class="csub">getMonthlyReport()</div></div>
+      <div class="cb" id="rev-table">
+        <div class="spinner" style="display:block"><span class="spin"></span>Loading…</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Expenses (Apr 2025)</div></div>
+      <div class="cb">
+        <div class="fin-row"><span style="color:var(--muted)">Maintenance</span><span>₹1,85,000</span></div>
+        <div class="fin-row"><span style="color:var(--muted)">Utilities</span><span>₹65,000</span></div>
+        <div class="fin-row"><span style="color:var(--muted)">Staff Salaries</span><span>₹2,20,000</span></div>
+        <div class="fin-row"><span style="color:var(--muted)">Procurement</span><span>₹45,000</span></div>
+        <div class="fin-row"><span>Total Expenses</span><span style="color:var(--neg)">₹5,15,000</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Net position</div></div>
+      <div class="cb" style="text-align:center;padding:20px 14px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">NET SURPLUS</div>
+        <div style="font-size:36px;font-weight:300;font-family:var(--mono);color:var(--pos)" id="net-surplus">—</div>
+        <div style="font-size:12px;color:var(--pos);margin-top:4px" id="gross-margin">—</div>
+        <div style="margin-top:16px">
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px"><span>Collection rate</span><span id="coll-rate-pct" style="font-weight:600">—</span></div>
+          <div class="pbar"><div class="pfill pf-blue" id="coll-bar" style="width:0%"></div></div>
+        </div>
+        <button class="btn btn-g btn-sm" style="margin-top:14px" onclick="toast('Exported to SAP Analytics Cloud ✓')">↓ Export to SAC</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ct">6-month revenue trend</div><div class="csub">getRevenueTrend() — analyticsService</div></div>
+    <div class="cb">
+      <div class="barchart" id="rev-chart"><div class="spinner" style="display:block"><span class="spin"></span>Loading…</div></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">Revenue in ₹ (actual from database)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ VISITORS ═══════════ -->
+<div class="page" id="page-visitors">
+  <div class="g2">
+    <div class="card">
+      <div class="ch">
+        <div><div class="ct">Visitor log</div><div class="csub">Live from <code>/Visitors</code></div></div>
+        <button class="btn btn-p btn-sm" onclick="openModal('modal-visitor')">+ Log Entry</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="tbl">
+          <thead><tr><th>Visitor</th><th>Student</th><th style="width:70px">Room</th><th style="width:70px">Purpose</th><th style="width:60px">Entry</th><th style="width:60px">Exit</th><th style="width:70px">Status</th></tr></thead>
+          <tbody id="vis-tbody"><tr><td colspan="7" style="text-align:center;padding:20px;color:var(--muted)">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Today's security stats</div></div>
+      <div class="cb">
+        <div class="stat4" id="vis-stats">
+          <div class="scard"><div class="sval" id="vs-total" style="color:var(--sap)">—</div><div class="slbl" style="color:var(--sap)">Total entries</div></div>
+          <div class="scard"><div class="sval" id="vs-inside" style="color:var(--warn)">—</div><div class="slbl" style="color:var(--warn)">Still inside</div></div>
+          <div class="scard"><div class="sval" id="vs-exited" style="color:var(--pos)">—</div><div class="slbl" style="color:var(--pos)">Exited</div></div>
+          <div class="scard"><div class="sval" id="vs-overstay" style="color:var(--neg)">—</div><div class="slbl" style="color:var(--neg)">Overstay</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ JOBS ═══════════ -->
+<div class="page" id="page-jobs">
+  <div class="strip s-ok">✓ Scheduler active — node-cron · All jobs start automatically on <code>cds watch</code></div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">Scheduled jobs</div><div class="csub">scheduler.js — auto-starts on cds.once('served')</div></div>
+      <div class="cb">
+        <div class="jobcard"><div><div class="jname">SLA check — slaJob.js</div><div class="jcron">*/10 * * * * · every 10 min</div></div><div style="display:flex;align-items:center;gap:8px"><div class="running"></div><span style="font-size:12px;color:var(--pos)">Running</span><button class="btn btn-s btn-sm" onclick="triggerJob('sla')">▶ Run now</button></div></div>
+        <div class="jobcard"><div><div class="jname">Monthly invoices — invoiceJob.js</div><div class="jcron">0 6 1 * * · 6am on 1st</div></div><div style="display:flex;align-items:center;gap:8px"><div class="running"></div><span style="font-size:12px;color:var(--pos)">Running</span><button class="btn btn-s btn-sm" onclick="triggerJob('invoices')">▶ Run now</button></div></div>
+        <div class="jobcard"><div><div class="jname">Fee reminder — scheduler.js</div><div class="jcron">0 9 * * * · 9am daily</div></div><div style="display:flex;align-items:center;gap:8px"><div class="running"></div><span style="font-size:12px;color:var(--pos)">Running</span><span style="font-size:11px;color:var(--muted)">Auto-only</span></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><div class="ct">Live structured log</div><div class="csub">logger.js — JSON SAP BTP format</div></div>
+      <div class="cb" style="padding:0">
+        <div class="logbox" id="logbox" style="border-radius:0 0 var(--rl) var(--rl)"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ct">Architecture — how it all connects</div></div>
+    <div class="cb" style="font-family:var(--mono);font-size:12.5px;color:var(--muted);line-height:2">
+      <span style="color:var(--sap)">index.html (Fiori UI)</span><br>
+      &nbsp;&nbsp;↓ <span style="color:var(--muted)">fetch() OData V4 — localhost:4004</span><br>
+      <span style="color:var(--sap)">hostel-service.cds</span> → OData V4 endpoints<br>
+      <span style="color:var(--sap)">hostel-service.js</span> → registers handlers + actions<br>
+      &nbsp;&nbsp;↓ delegates to handlers/<br>
+      <span style="color:var(--text)">studentHandler · paymentHandler · complaintHandler · procurementHandler</span><br>
+      &nbsp;&nbsp;↓ calls services/<br>
+      <span style="color:var(--pos)">roomService · paymentService · analyticsService</span><br>
+      &nbsp;&nbsp;↓ uses utils/<br>
+      <span style="color:var(--warn)">logger · errorHandler · slaEngine</span><br>
+      &nbsp;&nbsp;↓ SQLite (dev) / SAP HANA (prod)<br>
+      <span style="color:var(--neg)">db/schema.cds · db/data/*.csv (auto-seeded)</span><br>
+      &nbsp;&nbsp;<br>
+      <span style="color:var(--muted)">scheduler.js → slaJob · invoiceJob (background)</span>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- ═══════════ MODALS ═══════════ -->
+
+<!-- Add Student -->
+<div class="overlay" id="modal-student">
+  <div class="modal">
+    <div class="mhead"><span class="mtitle">Onboard Student — H2R Start</span><span class="mclose" onclick="closeModal('modal-student')">✕</span></div>
+    <div class="mbody">
+      <div class="minfo">POST /odata/v4/HostelService/Students → BEFORE hook auto-generates Student ID</div>
+      <div class="fgrid">
+        <div class="fgroup"><label>Full Name *</label><input type="text" id="s-name" placeholder="e.g. Rahul Kumar"></div>
+        <div class="fgroup"><label>Email *</label><input type="email" id="s-email" placeholder="student@kiit.ac.in"></div>
+        <div class="fgroup"><label>Phone</label><input type="text" id="s-phone" placeholder="+91 XXXXXXXXXX"></div>
+        <div class="fgroup"><label>Gender</label><select id="s-gender"><option>Male</option><option>Female</option><option>Other</option></select></div>
+        <div class="fgroup"><label>Course *</label><select id="s-course"><option>B.Tech CSE</option><option>B.Tech ECE</option><option>MBA</option><option>MCA</option><option>BCA</option></select></div>
+        <div class="fgroup"><label>Year *</label><select id="s-year"><option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option><option value="4">4th</option></select></div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-g" onclick="closeModal('modal-student')">Cancel</button>
+      <button class="btn btn-p" onclick="addStudent()">✓ Register — Start H2R</button>
+    </div>
+  </div>
+</div>
+
+<!-- Smart Allocate Room -->
+<div class="overlay" id="modal-allocate">
+  <div class="modal">
+    <div class="mhead"><span class="mtitle">Smart Room Allocation Engine</span><span class="mclose" onclick="closeModal('modal-allocate')">✕</span></div>
+    <div class="mbody">
+      <div class="minfo">POST /allocateRoom → roomService.allocate() → scores all vacant rooms</div>
+      <div class="fgrid">
+        <div class="fgroup"><label>Student ID</label><input type="text" id="al-sid" placeholder="S-1001"></div>
+        <div class="fgroup"><label>Room Type Preference</label><select id="al-type"><option value="">No preference</option><option value="NonAC_Double">Non-AC Double</option><option value="NonAC_Single">Non-AC Single</option><option value="AC_Single">AC Single</option><option value="AC_Double">AC Double</option></select></div>
+        <div class="fgroup"><label>Floor Preference</label><select id="al-floor"><option value="0">No preference</option><option value="1">Ground Floor</option><option value="2">1st Floor</option><option value="3">2nd Floor</option></select></div>
+        <div class="fgroup"><label>Block Preference</label><select id="al-block"><option value="">No preference</option><option value="BlockA_Boys">Block A (Boys)</option><option value="BlockB_Girls">Block B (Girls)</option><option value="BlockC_PG">Block C (PG)</option><option value="BlockD_Premium">Block D (Premium)</option></select></div>
+      </div>
+      <div class="alloc-box" id="alloc-result">
+        <div style="font-size:13.5px;font-weight:600;color:var(--pos);margin-bottom:5px" id="alloc-room-title">—</div>
+        <div style="font-size:12.5px;color:#1A5C2E" id="alloc-room-detail">—</div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="btn btn-ok btn-sm" id="alloc-confirm-btn" onclick="confirmAllocation()">✓ Confirm Allocation</button>
+          <button class="btn btn-g btn-sm" onclick="document.getElementById('alloc-result').style.display='none'">✕</button>
+        </div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-g" onclick="closeModal('modal-allocate')">Cancel</button>
+      <button class="btn btn-p" onclick="runAllocation()">▶ Execute allocateRoom()</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Room -->
+<div class="overlay" id="modal-room">
+  <div class="modal">
+    <div class="mhead"><span class="mtitle">Add New Room</span><span class="mclose" onclick="closeModal('modal-room')">✕</span></div>
+    <div class="mbody">
+      <div class="fgrid">
+        <div class="fgroup"><label>Room Number *</label><input type="text" id="r-no" placeholder="A-116"></div>
+        <div class="fgroup"><label>Block *</label><select id="r-block"><option value="BlockA_Boys">Block A (Boys)</option><option value="BlockB_Girls">Block B (Girls)</option><option value="BlockC_PG">Block C (PG)</option><option value="BlockD_Premium">Block D (Premium)</option></select></div>
+        <div class="fgroup"><label>Floor</label><select id="r-floor"><option value="1">Ground (1)</option><option value="2">1st (2)</option><option value="3">2nd (3)</option></select></div>
+        <div class="fgroup"><label>Type *</label><select id="r-type"><option value="NonAC_Double">Non-AC Double</option><option value="NonAC_Single">Non-AC Single</option><option value="AC_Single">AC Single</option><option value="AC_Double">AC Double</option></select></div>
+        <div class="fgroup"><label>Capacity *</label><input type="number" id="r-cap" value="2" min="1" max="4"></div>
+        <div class="fgroup"><label>Monthly Rent (₹) *</label><input type="number" id="r-rent" placeholder="8000"></div>
+        <div class="fgroup"><label>AC Room?</label><select id="r-isac"><option value="false">No</option><option value="true">Yes</option></select></div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-g" onclick="closeModal('modal-room')">Cancel</button>
+      <button class="btn btn-p" onclick="addRoom()">✓ Add Room</button>
+    </div>
+  </div>
+</div>
+
+<!-- Record Payment -->
+<div class="overlay" id="modal-payment">
+  <div class="modal">
+    <div class="mhead"><span class="mtitle">Record Payment — O2C</span><span class="mclose" onclick="closeModal('modal-payment')">✕</span></div>
+    <div class="mbody">
+      <div class="minfo">POST /Payments → BEFORE hook: invoice number, late fee calc, status derive</div>
+      <div class="fgrid">
+        <div class="fgroup"><label>Student ID *</label><input type="text" id="p-sid" placeholder="S-1001"></div>
+        <div class="fgroup"><label>Type *</label><select id="p-type"><option>RoomRent</option><option>MessCharges</option><option>LateFee</option><option>SecurityDeposit</option></select></div>
+        <div class="fgroup"><label>Amount (₹) *</label><input type="number" id="p-amount" placeholder="8000"></div>
+        <div class="fgroup"><label>Due Date *</label><input type="date" id="p-due"></div>
+        <div class="fgroup"><label>Payment Mode</label><select id="p-mode"><option>Online Transfer</option><option>Cash</option><option>Cheque</option><option>DD</option></select></div>
+        <div class="fgroup"><label>Transaction Ref</label><input type="text" id="p-ref" placeholder="UTR / Cheque No."></div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-g" onclick="closeModal('modal-payment')">Cancel</button>
+      <button class="btn btn-p" onclick="addPayment()">✓ Record Payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- Raise Complaint -->
+<div class="overlay" id="modal-complaint">
+  <div class="modal">
+    <div class="mhead"><span class="mtitle">Raise Complaint — Auto-Priority</span><span class="mclose" onclick="closeModal('modal-complaint')">✕</span></div>
+    <div class="mbody">
+      <div class="minfo">POST /Complaints → classifyComplaintPriority() auto-sets Priority + SLA + Assignee</div>
+      <div class="fgrid">
+        <div class="fgroup"><label>Student ID *</label><input type="text" id="c-sid" placeholder="S-1001"></div>
+        <div class="fgroup"><label>Room Number *</label><input type="text" id="c-room" placeholder="A-101"></div>
+        <div class="fgroup"><label>Category *</label>
+          <select id="c-cat">
+            <option>Electricity</option><option>Plumbing / Water</option>
+            <option>WiFi / Network</option><option>Furniture</option>
+            <option>Security</option><option>Housekeeping</option><option>Other</option>
+          </select>
+        </div>
+        <div class="fgroup"><label>Priority (auto-classified)</label>
+          <select id="c-pri"><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select>
+        </div>
+        <div class="fgroup span2"><label>Description</label><textarea id="c-desc" placeholder="Describe the issue in detail…"></textarea></div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-g" onclick="closeModal('modal-complaint')">Cancel</button>
+      <button class="btn btn-p" onclick="addComplaint()">✓ Submit — Auto-classify</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create PO -->
+<div class="overlay" id="modal-po">
+  <div class="modal">
+    <div class="mhead"><span class="mtitle">Create Purchase Order — P2P</span><span class="mclose" onclick="closeModal('modal-po')">✕</span></div>
+    <div class="mbody">
+      <div class="minfo">POST /PurchaseOrders → BEFORE hook: PO number auto, totalAmount computed</div>
+      <div class="fgrid">
+        <div class="fgroup"><label>Vendor *</label><select id="po-vendor" id="po-vendor"></select></div>
+        <div class="fgroup"><label>Category</label><select id="po-cat"><option>Maintenance</option><option>Housekeeping</option><option>IT/Network</option><option>Furniture</option><option>Utilities</option></select></div>
+        <div class="fgroup span2"><label>Item Description *</label><input type="text" id="po-item" placeholder="LED Bulbs x 50"></div>
+        <div class="fgroup"><label>Quantity *</label><input type="number" id="po-qty" placeholder="50" oninput="calcPO()"></div>
+        <div class="fgroup"><label>Unit Price (₹) *</label><input type="number" id="po-price" placeholder="200" oninput="calcPO()"></div>
+        <div class="fgroup"><label>Delivery Date</label><input type="date" id="po-date"></div>
+        <div class="fgroup"><label>Total (auto-computed)</label><input type="text" id="po-total" readonly style="background:var(--neutral);font-weight:600" value="₹0"></div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-g" onclick="closeModal('modal-po')">Cancel</button>
+      <button class="btn btn-p" onclick="addPO()">✓ Create PO</button>
+    </div>
+  </div>
+</div>
+
+<!-- Log Visitor -->
+<div class="overlay" id="modal-visitor">
+  <div class="modal">
+    <div class="mhead"><span class="mtitle">Log Visitor Entry</span><span class="mclose" onclick="closeModal('modal-visitor')">✕</span></div>
+    <div class="mbody">
+      <div class="fgrid">
+        <div class="fgroup"><label>Visitor Name *</label><input type="text" id="v-name" placeholder="Full name"></div>
+        <div class="fgroup"><label>Phone</label><input type="text" id="v-phone" placeholder="+91..."></div>
+        <div class="fgroup"><label>Visiting Student *</label><input type="text" id="v-student" placeholder="Student name or ID"></div>
+        <div class="fgroup"><label>Room Number</label><input type="text" id="v-room" placeholder="A-101"></div>
+        <div class="fgroup"><label>Purpose</label><select id="v-purpose"><option>Family Visit</option><option>Friend</option><option>Official</option><option>Delivery</option><option>Other</option></select></div>
+        <div class="fgroup"><label>Entry Time</label><input type="time" id="v-time"></div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-g" onclick="closeModal('modal-visitor')">Cancel</button>
+      <button class="btn btn-p" onclick="addVisitor()">✓ Log Entry</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ══════════════════════════════════════════════════
+     MAIN JAVASCRIPT — All OData V4 API calls live here
+══════════════════════════════════════════════════════ -->
+<script>
+// ── Config ───────────────────────────────────────────
+const BASE    = '/odata/v4/HostelService';
+let LIVE      = false;   // true when CAP backend is reachable
+let allocData = null;    // holds last allocation result
+let logLines  = [];
+
+// ── OData V4 fetch wrapper ────────────────────────────
+async function od(path, opts={}) {
+  const res = await fetch(BASE + path, {
+    headers: { 'Content-Type':'application/json', 'Accept':'application/json' },
+    ...opts
+  });
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`;
+    try { const e = await res.json(); msg = e.error?.message || msg; } catch {}
+    throw new Error(msg);
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+// ── Backend health probe ──────────────────────────────
+async function probe() {
+  try {
+    await fetch(BASE + '/$metadata', { signal: AbortSignal.timeout(2000) });
+    LIVE = true;
+    document.getElementById('connDot').className    = 'conn-dot live';
+    document.getElementById('connLabel').textContent = 'Live';
+    document.getElementById('conn-strip').className  = 'strip s-live';
+    document.getElementById('conn-strip').innerHTML  =
+      '✓ Connected to <code>http://localhost:4004/odata/v4/HostelService/</code> — SAP CAP live · SQLite DB';
+    addLog('INFO','App','Backend connected: SAP CAP OData V4 service ready');
+  } catch {
+    LIVE = false;
+    document.getElementById('connDot').className    = 'conn-dot demo';
+    document.getElementById('connLabel').textContent = 'Demo';
+    document.getElementById('conn-strip').className  = 'strip s-demo';
+    document.getElementById('conn-strip').innerHTML  =
+      '⚠ Backend offline — showing demo data. Run <code>cds watch</code> in project root then refresh.';
+    addLog('WARN','App','Backend not reachable — demo mode active');
+  }
+  return LIVE;
+}
+
+// ── Logging ───────────────────────────────────────────
+function addLog(level, mod, msg) {
+  const ts = new Date().toTimeString().slice(0,8);
+  const col = { INFO:'#60a5fa', WARN:'#fbbf24', ERROR:'#f87171', AUDIT:'#34d399' }[level]||'#9ca3af';
+  logLines.unshift(`<div class="logline"><span style="color:#6b7280">${ts}</span> <span style="color:${col}">[${level}]</span> <span style="color:#93c5fd">${mod}</span> — ${msg}</div>`);
+  if (logLines.length > 30) logLines.pop();
+  const lb = document.getElementById('logbox');
+  if (lb) lb.innerHTML = logLines.join('');
+}
+
+// ── Badge helper ──────────────────────────────────────
+function badge(v) {
+  const m = {
+    Paid:'b-pos', Approved:'b-pos', Delivered:'b-pos', Active:'b-pos', Resolved:'b-pos',
+    Exited:'b-pos', Vacant:'b-pos',
+    Pending:'b-warn', InProgress:'b-warn','In Transit':'b-warn', Maintenance:'b-warn', SLAWarning:'b-warn',
+    Overdue:'b-neg', Critical:'b-neg', Open:'b-neg', SLABreached:'b-neg', Inside:'b-neg',
+    High:'b-warn', Medium:'b-info', Low:'b-pos', Draft:'b-neu', Occupied:'b-info'
+  };
+  return `<span class="badge ${m[v]||'b-neu'}">${v||'—'}</span>`;
+}
+const fmt = n => n != null ? '₹'+parseFloat(n).toLocaleString('en-IN') : '—';
+const mono = s => `<span style="font-family:var(--mono);font-size:11.5px;color:var(--muted)">${s}</span>`;
+
+// ── DEMO DATA (shown when backend is offline) ─────────
+const DEMO = {
+  students: [
+    {ID:'s-001',studentID:'S-1001',name:'Aarav Sharma',course:'B.Tech CSE',year:2,room:{roomNumber:'A-101'},status:'Active',feeStatus:'Paid'},
+    {ID:'s-002',studentID:'S-1002',name:'Priya Singh',course:'B.Tech ECE',year:3,room:{roomNumber:'B-204'},status:'Active',feeStatus:'Pending'},
+    {ID:'s-003',studentID:'S-1003',name:'Ravi Kumar',course:'MBA',year:1,room:{roomNumber:'C-101'},status:'Active',feeStatus:'Paid'},
+    {ID:'s-004',studentID:'S-1004',name:'Ananya Das',course:'MCA',year:2,room:{roomNumber:'B-112'},status:'Active',feeStatus:'Overdue'},
+    {ID:'s-005',studentID:'S-1005',name:'Vikram Nair',course:'B.Tech CSE',year:4,room:{roomNumber:'A-215'},status:'Active',feeStatus:'Paid'},
+    {ID:'s-006',studentID:'S-1006',name:'Sneha Patel',course:'BCA',year:1,room:{roomNumber:'C-210'},status:'Active',feeStatus:'Paid'},
+    {ID:'s-007',studentID:'S-1007',name:'Arjun Mehta',course:'B.Tech ECE',year:2,room:{roomNumber:'D-101'},status:'Active',feeStatus:'Pending'},
+    {ID:'s-008',studentID:'S-1008',name:'Neha Joshi',course:'MBA',year:1,room:{roomNumber:'C-305'},status:'Active',feeStatus:'Paid'},
+    {ID:'s-009',studentID:'S-1009',name:'Rohit Verma',course:'B.Tech CSE',year:3,room:{roomNumber:'A-102'},status:'Active',feeStatus:'Paid'},
+    {ID:'s-010',studentID:'S-1010',name:'Kavya Reddy',course:'B.Tech ECE',year:1,room:{roomNumber:'B-112'},status:'Active',feeStatus:'Pending'},
+  ],
+  rooms: [
+    {ID:'r-001',roomNumber:'A-101',block:'BlockA_Boys',floor:1,type:'NonAC_Double',capacity:2,occupied:2,status:'Occupied',monthlyRent:8000},
+    {ID:'r-002',roomNumber:'A-102',block:'BlockA_Boys',floor:1,type:'NonAC_Double',capacity:2,occupied:1,status:'Occupied',monthlyRent:8000},
+    {ID:'r-003',roomNumber:'A-108',block:'BlockA_Boys',floor:1,type:'NonAC_Double',capacity:2,occupied:0,status:'Vacant',monthlyRent:8000},
+    {ID:'r-004',roomNumber:'A-110',block:'BlockA_Boys',floor:1,type:'NonAC_Single',capacity:1,occupied:0,status:'Vacant',monthlyRent:9500},
+    {ID:'r-005',roomNumber:'A-215',block:'BlockA_Boys',floor:2,type:'NonAC_Single',capacity:1,occupied:1,status:'Occupied',monthlyRent:9500},
+    {ID:'r-006',roomNumber:'B-112',block:'BlockB_Girls',floor:1,type:'NonAC_Double',capacity:2,occupied:2,status:'Occupied',monthlyRent:8000},
+    {ID:'r-007',roomNumber:'B-204',block:'BlockB_Girls',floor:2,type:'AC_Double',capacity:2,occupied:1,status:'Occupied',monthlyRent:12000},
+    {ID:'r-008',roomNumber:'B-305',block:'BlockB_Girls',floor:3,type:'AC_Single',capacity:1,occupied:0,status:'Maintenance',monthlyRent:14000},
+    {ID:'r-009',roomNumber:'C-101',block:'BlockC_PG',floor:1,type:'NonAC_Single',capacity:1,occupied:1,status:'Occupied',monthlyRent:9000},
+    {ID:'r-010',roomNumber:'D-101',block:'BlockD_Premium',floor:1,type:'AC_Single',capacity:1,occupied:1,status:'Occupied',monthlyRent:16000},
+    {ID:'r-011',roomNumber:'D-201',block:'BlockD_Premium',floor:2,type:'AC_Double',capacity:2,occupied:0,status:'Vacant',monthlyRent:13000},
+  ],
+  payments: [
+    {ID:'p-001',invoiceNumber:'INV-2025-0001',student:{name:'Aarav Sharma'},type:'RoomRent',amount:8000,dueDate:'2025-04-05',paidDate:'2025-04-03',status:'Paid'},
+    {ID:'p-002',invoiceNumber:'INV-2025-0002',student:{name:'Priya Singh'},type:'RoomRent',amount:12000,dueDate:'2025-04-05',paidDate:null,status:'Pending'},
+    {ID:'p-003',invoiceNumber:'INV-2025-0003',student:{name:'Ravi Kumar'},type:'RoomRent',amount:9000,dueDate:'2025-04-05',paidDate:'2025-04-07',status:'Paid'},
+    {ID:'p-004',invoiceNumber:'INV-2025-0004',student:{name:'Ananya Das'},type:'RoomRent',amount:8000,dueDate:'2025-03-05',paidDate:null,status:'Overdue'},
+    {ID:'p-005',invoiceNumber:'INV-2025-0005',student:{name:'Vikram Nair'},type:'RoomRent',amount:9500,dueDate:'2025-04-05',paidDate:'2025-04-04',status:'Paid'},
+    {ID:'p-006',invoiceNumber:'INV-2025-0006',student:{name:'Sneha Patel'},type:'MessCharges',amount:3500,dueDate:'2025-04-05',paidDate:'2025-04-06',status:'Paid'},
+    {ID:'p-007',invoiceNumber:'INV-2025-0007',student:{name:'Arjun Mehta'},type:'RoomRent',amount:16000,dueDate:'2025-04-05',paidDate:null,status:'Pending'},
+  ],
+  complaints: [
+    {ID:'c-001',complaintID:'CMP-0001',category:'Electricity',priority:'Critical',description:'Power outage since yesterday night.',status:'Open',roomNumber:'B-204',createdAt:'2025-04-17T08:00:00Z'},
+    {ID:'c-002',complaintID:'CMP-0002',category:'Plumbing / Water',priority:'High',description:'Tap leaking — water on floor.',status:'InProgress',roomNumber:'B-112',createdAt:'2025-04-16T10:00:00Z'},
+    {ID:'c-003',complaintID:'CMP-0003',category:'WiFi / Network',priority:'Medium',description:'Internet slow after 9pm.',status:'Open',roomNumber:'A-101',createdAt:'2025-04-15T20:00:00Z'},
+    {ID:'c-004',complaintID:'CMP-0004',category:'Furniture',priority:'Low',description:'Chair armrest broken.',status:'Open',roomNumber:'D-101',createdAt:'2025-04-14T09:00:00Z'},
+    {ID:'c-005',complaintID:'CMP-0005',category:'Electricity',priority:'High',description:'Fan not working.',status:'InProgress',roomNumber:'A-215',createdAt:'2025-04-13T15:00:00Z'},
+  ],
+  pos: [
+    {ID:'po-001',poNumber:'PO-2025-1001',vendor:{name:'TechFix Pvt Ltd'},itemDesc:'LED Bulbs x 50',totalAmount:10000,status:'Delivered',threeWayMatch:true},
+    {ID:'po-002',poNumber:'PO-2025-1002',vendor:{name:'CleanSupply Co.'},itemDesc:'Mops & Kit x 10',totalAmount:4500,status:'In Transit',threeWayMatch:false},
+    {ID:'po-003',poNumber:'PO-2025-1003',vendor:{name:'FurnishAll Ltd'},itemDesc:'Study Tables x 5',totalAmount:25000,status:'Approved',threeWayMatch:false},
+  ],
+  vendors: [
+    {ID:'v-001',name:'TechFix Pvt Ltd',category:'Electrical',rating:5,status:'Approved'},
+    {ID:'v-002',name:'CleanSupply Co.',category:'Housekeeping',rating:4,status:'Approved'},
+    {ID:'v-003',name:'AquaPure Systems',category:'Plumbing',rating:3,status:'Approved'},
+    {ID:'v-004',name:'FurnishAll Ltd',category:'Furniture',rating:4,status:'Approved'},
+    {ID:'v-005',name:'NetConnect ISP',category:'Internet',rating:5,status:'Approved'},
+  ],
+  visitors: [
+    {ID:'vi-001',visitorName:'Ramesh Sharma',student:{name:'Aarav Sharma'},roomNumber:'A-101',purpose:'Family Visit',entryTime:'2025-04-18T09:30:00Z',exitTime:'2025-04-18T11:45:00Z',status:'Exited'},
+    {ID:'vi-002',visitorName:'Kavita Singh',student:{name:'Priya Singh'},roomNumber:'B-204',purpose:'Family Visit',entryTime:'2025-04-18T10:00:00Z',exitTime:null,status:'Inside'},
+    {ID:'vi-003',visitorName:'Rohit Friend',student:{name:'Arjun Mehta'},roomNumber:'D-101',purpose:'Friend',entryTime:'2025-04-18T14:00:00Z',exitTime:'2025-04-18T16:30:00Z',status:'Exited'},
+  ],
+};
+
+// ── LOAD FUNCTIONS ────────────────────────────────────
+
+async function loadDashboard() {
+  try {
+    let kpi;
+    if (LIVE) {
+      kpi = await od('/getDashboardKPIs()');
+      addLog('INFO','Dashboard','getDashboardKPIs() loaded from DB');
+    } else {
+      kpi = { totalStudents:10, occupancyRate:84, pendingFees:240000, openComplaints:5, monthlyRevenue:980000, collectionRate:81 };
+    }
+    document.getElementById('k-students').textContent = kpi.totalStudents;
+    document.getElementById('k-occ').textContent      = kpi.occupancyRate + '%';
+    document.getElementById('k-fees').textContent     = fmt(kpi.pendingFees);
+    document.getElementById('k-cmp').textContent      = kpi.openComplaints;
+    document.getElementById('k-rev').textContent      = fmt(kpi.monthlyRevenue);
+    document.getElementById('k-coll').textContent     = (kpi.collectionRate||81) + '%';
+    document.getElementById('cmp-badge').textContent  = kpi.openComplaints;
+  } catch(e) { addLog('ERROR','Dashboard',e.message); }
+
+  // Block occupancy bars
+  try {
+    const rooms = LIVE ? (await od('/Rooms')).value : DEMO.rooms;
+    const blocks = {};
+    rooms.forEach(r => {
+      blocks[r.block] = blocks[r.block] || { cap:0, occ:0 };
+      blocks[r.block].cap += r.capacity;
+      blocks[r.block].occ += r.occupied;
+    });
+    const names = { BlockA_Boys:'Block A (Boys)', BlockB_Girls:'Block B (Girls)', BlockC_PG:'Block C (PG)', BlockD_Premium:'Block D (Premium)' };
+    const colors = ['pf-blue','pf-blue','pf-green','pf-red'];
+    document.getElementById('occ-bars').innerHTML = Object.entries(blocks).map(([k,v],i) => {
+      const pct = v.cap ? Math.round((v.occ/v.cap)*100) : 0;
+      return `<div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+          <span>${names[k]||k}</span><span style="font-weight:500">${v.occ}/${v.cap}</span>
+        </div>
+        <div class="pbar"><div class="pfill ${colors[i%4]}" style="width:${pct}%"></div></div>
+      </div>`;
+    }).join('');
+    document.getElementById('occ-src').textContent = LIVE ? 'Live from /Rooms' : 'Demo data';
+  } catch(e) { addLog('ERROR','Dashboard',e.message); }
+
+  // Activity (logs)
+  document.getElementById('activity-log').innerHTML = [
+    { color:'var(--pos)',  text:'Ravi Kumar — Fee ₹9,000 paid',         time:'10:32' },
+    { color:'var(--neg)',  text:'Room B-204 — Complaint CMP-0001',       time:'10:15' },
+    { color:'var(--sap)',  text:'Student S-1001 — Room A-101 allocated', time:'09:50' },
+    { color:'var(--pos)',  text:'PO-2025-1001 delivered — 3WM ✓',        time:'09:20' },
+    { color:'var(--warn)', text:'SLA Warning — CMP-0003 (2h left)',      time:'09:00' },
+  ].map(a => `<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 14px;border-bottom:1px solid #F5F5F5">
+    <div style="width:7px;height:7px;border-radius:50%;background:${a.color};margin-top:4px;flex-shrink:0"></div>
+    <div><div style="font-size:13px">${a.text}</div><div style="font-size:11.5px;color:var(--muted)">${a.time} today</div></div>
+  </div>`).join('');
+}
+
+async function loadStudents(q='') {
+  try {
+    let data;
+    if (LIVE) {
+      const filter = q ? `?$filter=contains(tolower(name),tolower('${q}')) or contains(studentID,'${q}')&$expand=room` : '?$expand=room&$orderby=studentID';
+      data = (await od('/Students' + filter)).value;
+      addLog('INFO','Students',`Loaded ${data.length} records from DB`);
+    } else {
+      data = q ? DEMO.students.filter(s=>s.name.toLowerCase().includes(q.toLowerCase())||s.studentID.includes(q)) : DEMO.students;
+    }
+    document.getElementById('stu-count').textContent = data.length;
+    document.getElementById('stu-tbody').innerHTML = data.map(s => `<tr>
+      <td>${mono(s.studentID)}</td>
+      <td style="font-weight:500">${s.name}</td>
+      <td>${s.course}</td>
+      <td>${s.year}</td>
+      <td>${mono(s.room?.roomNumber || '—')}</td>
+      <td>${badge(s.feeStatus)}</td>
+      <td>${badge(s.status)}</td>
+      <td>
+        ${s.status === 'Active'
+          ? `<button class="btn btn-g btn-sm" onclick="checkoutStudent('${s.ID}','${s.studentID}')">Checkout</button>`
+          : badge(s.status)}
+      </td>
+    </tr>`).join('');
+  } catch(e) { addLog('ERROR','Students',e.message); toast('Error loading students: ' + e.message); }
+}
+
+let stuSearchTimer;
+function searchStudents(q) {
+  clearTimeout(stuSearchTimer);
+  stuSearchTimer = setTimeout(() => loadStudents(q), LIVE ? 400 : 0);
+}
+
+async function loadRooms() {
+  try {
+    const data = LIVE ? (await od('/Rooms?$orderby=roomNumber')).value : DEMO.rooms;
+    if (LIVE) addLog('INFO','Rooms',`Loaded ${data.length} rooms from DB`);
+    const occ  = data.filter(r=>r.status==='Occupied').length;
+    const vac  = data.filter(r=>r.status==='Vacant').length;
+    const mnt  = data.filter(r=>r.status==='Maintenance').length;
+    const total = data.reduce((s,r)=>s+r.capacity,0);
+    const occT  = data.reduce((s,r)=>s+r.occupied,0);
+    const rate  = total ? Math.round((occT/total)*100) : 0;
+    document.getElementById('rs-occ').textContent  = occ;
+    document.getElementById('rs-vac').textContent  = vac;
+    document.getElementById('rs-mnt').textContent  = mnt;
+    document.getElementById('rs-rate').textContent = rate + '%';
+    document.getElementById('room-map-src').textContent = LIVE ? `${data.length} rooms from DB` : 'Demo data';
+    document.getElementById('room-grid').innerHTML = data.map(r =>
+      `<div class="rcell ${r.status}" onclick="toast('Room ${r.roomNumber} — ${r.status} · ${r.type} · ${fmt(r.monthlyRent)}/mo')">
+        <div style="font-weight:700;font-size:12px">${r.roomNumber}</div>
+        <div style="font-size:10px;margin-top:2px;opacity:.8">${r.type.split('_')[0]}</div>
+      </div>`).join('');
+    document.getElementById('rooms-tbody').innerHTML = data.map(r => `<tr>
+      <td>${mono(r.roomNumber)}</td><td>${r.block}</td><td>${r.type}</td>
+      <td>${r.capacity}</td><td>${r.occupied}</td><td>${badge(r.status)}</td><td>${fmt(r.monthlyRent)}</td>
+    </tr>`).join('');
+  } catch(e) { addLog('ERROR','Rooms',e.message); }
+}
+
+async function loadPayments(statusFilter='') {
+  try {
+    let data;
+    if (LIVE) {
+      const q = statusFilter
+        ? `?$filter=status eq '${statusFilter}'&$expand=student&$orderby=dueDate desc`
+        : '?$expand=student&$orderby=dueDate desc';
+      data = (await od('/Payments'+q)).value;
+      addLog('INFO','Payments',`Loaded ${data.length} payments`);
+    } else {
+      data = statusFilter ? DEMO.payments.filter(p=>p.status===statusFilter) : DEMO.payments;
+    }
+    const paid    = data.filter(p=>p.status==='Paid').reduce((s,p)=>s+p.amount,0);
+    const pending = data.filter(p=>p.status==='Pending').reduce((s,p)=>s+p.amount,0);
+    const overdue = data.filter(p=>p.status==='Overdue').reduce((s,p)=>s+p.amount,0);
+    document.getElementById('pk-paid').textContent    = fmt(paid);
+    document.getElementById('pk-pending').textContent = fmt(pending);
+    document.getElementById('pk-overdue').textContent = fmt(overdue);
+    document.getElementById('pk-total').textContent   = data.length;
+    document.getElementById('pay-tbody').innerHTML = data.map(p => `<tr>
+      <td>${mono(p.invoiceNumber)}</td>
+      <td style="font-weight:500">${p.student?.name || '—'}</td>
+      <td>${p.type}</td>
+      <td style="font-weight:500">${fmt(p.amount)}</td>
+      <td>${p.dueDate||'—'}</td>
+      <td>${p.paidDate||'—'}</td>
+      <td>${badge(p.status)}</td>
+      <td>${p.status !== 'Paid'
+        ? `<button class="btn btn-ok btn-sm" onclick="markPaid('${p.ID}','${p.invoiceNumber}')">Mark Paid</button>`
+        : '<span style="color:var(--pos);font-size:12px">✓ Done</span>'}</td>
+    </tr>`).join('');
+  } catch(e) { addLog('ERROR','Payments',e.message); }
+}
+
+async function loadComplaints(filter='all') {
+  document.getElementById('cmp-list').innerHTML = '<div class="spinner" style="display:block"><span class="spin"></span>Loading…</div>';
+  try {
+    let data;
+    if (LIVE) {
+      const q = filter !== 'all'
+        ? `?$filter=priority eq '${filter}'&$orderby=createdAt desc`
+        : '?$orderby=createdAt desc';
+      data = (await od('/Complaints'+q)).value;
+      addLog('INFO','Complaints',`Loaded ${data.length} complaints`);
+    } else {
+      data = filter !== 'all' ? DEMO.complaints.filter(c=>c.priority===filter) : DEMO.complaints;
+    }
+    document.getElementById('cmp-badge').textContent = data.filter(c=>!['Resolved','Closed'].includes(c.status)).length;
+
+    // Category bars
+    const cats = {};
+    data.forEach(c => { cats[c.category] = (cats[c.category]||0)+1; });
+    const maxV = Math.max(...Object.values(cats),1);
+    document.getElementById('cmp-bars').innerHTML = Object.entries(cats).map(([cat,n]) =>
+      `<div><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px">
+        <span>${cat}</span><span style="font-weight:500">${n}</span></div>
+        <div class="pbar"><div class="pfill pf-blue" style="width:${Math.round((n/maxV)*100)}%"></div></div>
+      </div>`).join('');
+
+    document.getElementById('cmp-list').innerHTML = data.map(c => {
+      const breach = c.status === 'SLABreached' || (c.status==='Open' && c.priority==='Critical');
+      return `<div class="ccard ${c.priority} ${breach?'SLABreached':''}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px">
+          <div>${mono(c.complaintID)} <strong style="font-size:13.5px;margin-left:6px">${c.category}</strong></div>
+          <div style="display:flex;gap:5px">${badge(c.priority)}${badge(c.status)}</div>
+        </div>
+        <div style="font-size:12.5px;color:var(--muted);margin-bottom:8px">${c.description||'—'}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted)">
+          <span>Room ${c.roomNumber||'—'} · ${(c.createdAt||'').split('T')[0]||'—'}</span>
+          ${c.status !== 'Resolved'
+            ? `<button class="btn btn-ok btn-sm" onclick="resolveComplaint('${c.ID}','${c.complaintID}')">✓ Resolve</button>`
+            : ''}
+        </div>
+      </div>`;
+    }).join('') || '<div style="text-align:center;padding:24px;color:var(--muted)">No complaints found.</div>';
+  } catch(e) { addLog('ERROR','Complaints',e.message); document.getElementById('cmp-list').innerHTML = `<div style="padding:16px;color:var(--neg)">Error: ${e.message}</div>`; }
+}
+
+async function loadProcurement() {
+  try {
+    const pos = LIVE ? (await od('/PurchaseOrders?$expand=vendor')).value : DEMO.pos;
+    const vendors = LIVE ? (await od('/Vendors')).value : DEMO.vendors;
+    if (LIVE) addLog('INFO','Procurement',`Loaded ${pos.length} POs, ${vendors.length} vendors`);
+
+    document.getElementById('po-tbody').innerHTML = pos.map(p => `<tr>
+      <td>${mono(p.poNumber)}</td>
+      <td>${p.vendor?.name||'—'}</td>
+      <td>${p.itemDesc}</td>
+      <td style="font-weight:500">${fmt(p.totalAmount)}</td>
+      <td>${badge(p.status)}</td>
+      <td>${p.threeWayMatch ? '<span style="color:var(--pos)">✓</span>' : '<span style="color:var(--muted)">—</span>'}</td>
+    </tr>`).join('');
+
+    document.getElementById('vendor-tbody').innerHTML = vendors.map(v => `<tr>
+      <td style="font-weight:500">${v.name}</td>
+      <td>${v.category}</td>
+      <td>${'★'.repeat(v.rating||0)+'☆'.repeat(5-(v.rating||0))}</td>
+      <td>${badge(v.status)}</td>
+    </tr>`).join('');
+
+    // Populate vendor select in modal
+    const vsel = document.getElementById('po-vendor');
+    if (vsel) vsel.innerHTML = vendors.map(v=>`<option value="${v.ID}">${v.name}</option>`).join('');
+  } catch(e) { addLog('ERROR','Procurement',e.message); }
+}
+
+async function loadReports() {
+  try {
+    let rep;
+    if (LIVE) {
+      rep = await od('/getMonthlyReport(month=4,year=2025)');
+      addLog('INFO','Reports','getMonthlyReport(month=4,year=2025) loaded');
+    } else {
+      rep = { totalRevenue:984500, totalExpenses:515000, netSurplus:469500, collectionRate:81.2, invoiceCount:9 };
+    }
+    document.getElementById('rev-table').innerHTML = `
+      <div class="fin-row"><span style="color:var(--muted)">Room Rent</span><span style="font-weight:500">₹7,40,000</span></div>
+      <div class="fin-row"><span style="color:var(--muted)">Mess Charges</span><span style="font-weight:500">₹1,22,000</span></div>
+      <div class="fin-row"><span style="color:var(--muted)">Late Fees</span><span style="font-weight:500">₹18,000</span></div>
+      <div class="fin-row"><span style="color:var(--muted)">Visitor Charges</span><span style="font-weight:500">₹4,500</span></div>
+      <div class="fin-row"><span>Total Revenue</span><span style="color:var(--pos)">${fmt(rep.totalRevenue)}</span></div>`;
+    document.getElementById('net-surplus').textContent = fmt(rep.netSurplus);
+    document.getElementById('gross-margin').textContent = 'Gross margin: ' + Math.round(rep.netSurplus/(rep.totalRevenue||1)*100) + '%';
+    document.getElementById('coll-rate-pct').textContent = rep.collectionRate + '%';
+    document.getElementById('coll-bar').style.width = rep.collectionRate + '%';
+  } catch(e) { addLog('ERROR','Reports',e.message); }
+
+  // Revenue trend
+  try {
+    let trend;
+    if (LIVE) {
+      trend = (await od('/getRevenueTrend()')).value;
+    } else {
+      trend = [
+        {month:'Nov 24',revenue:920000},{month:'Dec 24',revenue:870000},
+        {month:'Jan 25',revenue:950000},{month:'Feb 25',revenue:910000},
+        {month:'Mar 25',revenue:960000},{month:'Apr 25',revenue:984500},
+      ];
+    }
+    const maxR = Math.max(...trend.map(t=>t.revenue),1);
+    document.getElementById('rev-chart').innerHTML = trend.map((t,i) => {
+      const h = Math.round((t.revenue/maxR)*90);
+      const isLast = i === trend.length-1;
+      return `<div class="barcol">
+        <div class="barval" style="${isLast?'color:var(--sap)':''}">${(t.revenue/100000).toFixed(1)}L</div>
+        <div class="barfill ${isLast?'pf-blue':'pf-green'}" style="height:${h}px"></div>
+        <div class="barlbl" style="${isLast?'color:var(--sap);font-weight:600':''}">${t.month}${isLast?' ●':''}</div>
+      </div>`;
+    }).join('');
+  } catch(e) { addLog('ERROR','Reports',e.message); }
+}
+
+async function loadVisitors() {
+  try {
+    const data = LIVE ? (await od('/Visitors?$expand=student&$orderby=entryTime desc&$top=20')).value : DEMO.visitors;
+    if (LIVE) addLog('INFO','Visitors',`Loaded ${data.length} visitor records`);
+    const inside = data.filter(v=>v.status==='Inside').length;
+    document.getElementById('vs-total').textContent    = data.length;
+    document.getElementById('vs-inside').textContent   = inside;
+    document.getElementById('vs-exited').textContent   = data.filter(v=>v.status==='Exited').length;
+    document.getElementById('vs-overstay').textContent = data.filter(v=>v.status==='Overstay').length;
+    document.getElementById('vis-tbody').innerHTML = data.map(v => `<tr>
+      <td style="font-weight:500">${v.visitorName}</td>
+      <td>${v.student?.name||'—'}</td>
+      <td>${mono(v.roomNumber||'—')}</td>
+      <td>${v.purpose||'—'}</td>
+      <td>${v.entryTime ? v.entryTime.split('T')[1]?.slice(0,5)||v.entryTime.slice(0,5) : '—'}</td>
+      <td>${v.exitTime  ? v.exitTime.split('T')[1]?.slice(0,5)||v.exitTime.slice(0,5)   : '—'}</td>
+      <td>${badge(v.status)}</td>
+    </tr>`).join('');
+  } catch(e) { addLog('ERROR','Visitors',e.message); }
+}
+
+// ── ACTIONS ───────────────────────────────────────────
+
+async function addStudent() {
+  const name  = document.getElementById('s-name').value.trim();
+  const email = document.getElementById('s-email').value.trim();
+  if (!name || !email) { toast('Name and Email are required'); return; }
+  const payload = {
+    name, email,
+    phone:  document.getElementById('s-phone').value,
+    gender: document.getElementById('s-gender').value,
+    course: document.getElementById('s-course').value,
+    year:   parseInt(document.getElementById('s-year').value),
+  };
+  try {
+    if (LIVE) {
+      const created = await od('/Students', { method:'POST', body: JSON.stringify(payload) });
+      toast(`✓ ${name} onboarded. ID: ${created.studentID}. H2R started.`);
+      addLog('AUDIT','Students',`Onboarded: ${created.studentID} — ${name}`);
+      loadStudents();
+    } else {
+      const id = `S-${1001+DEMO.students.length}`;
+      DEMO.students.push({ ID:'s-new-'+Date.now(), studentID:id, name, course:payload.course, year:payload.year, room:null, status:'Active', feeStatus:'Pending' });
+      toast(`✓ ${name} onboarded (demo). ID: ${id}.`);
+      loadStudents();
+    }
+    closeModal('modal-student');
+    ['s-name','s-email','s-phone'].forEach(id => document.getElementById(id).value='');
+  } catch(e) { toast('Error: ' + e.message); addLog('ERROR','Students',e.message); }
+}
+
+async function checkoutStudent(id, sid) {
+  if (!confirm(`Checkout student ${sid}?`)) return;
+  try {
+    if (LIVE) {
+      await od(`/Students('${id}')`, { method:'PATCH', body: JSON.stringify({ status:'Checked-Out' }) });
+      addLog('AUDIT','Students',`Checkout: ${sid}`);
+      loadStudents();
+      toast(`✓ ${sid} checked out.`);
+    } else {
+      const s = DEMO.students.find(x=>x.ID===id);
+      if (s) s.status='Checked-Out';
+      loadStudents(); toast(`✓ ${sid} checked out (demo).`);
+    }
+  } catch(e) { toast('Error: '+e.message); }
+}
+
+async function addRoom() {
+  const no = document.getElementById('r-no').value.trim();
+  if (!no) { toast('Room number required'); return; }
+  const payload = {
+    roomNumber: no,
+    block:      document.getElementById('r-block').value,
+    floor:      parseInt(document.getElementById('r-floor').value),
+    type:       document.getElementById('r-type').value,
+    capacity:   parseInt(document.getElementById('r-cap').value),
+    monthlyRent: parseFloat(document.getElementById('r-rent').value),
+    isACRoom:   document.getElementById('r-isac').value === 'true',
+    occupied:   0, status: 'Vacant',
+  };
+  try {
+    if (LIVE) {
+      await od('/Rooms', { method:'POST', body: JSON.stringify(payload) });
+      addLog('INFO','Rooms',`Room ${no} created`);
+      loadRooms();
+    } else {
+      DEMO.rooms.push({ ID:'r-new-'+Date.now(), ...payload });
+      loadRooms();
+    }
+    toast(`✓ Room ${no} added.`);
+    closeModal('modal-room');
+    document.getElementById('r-no').value=''; document.getElementById('r-rent').value='';
+  } catch(e) { toast('Error: '+e.message); }
+}
+
+async function markPaid(payId, invoiceNo) {
+  try {
+    if (LIVE) {
+      const result = await od('/markPaymentPaid', {
+        method:'POST',
+        body: JSON.stringify({ paymentID: payId, paymentMode:'Online Transfer', transactionRef:'TXN-'+Date.now().toString().slice(-8) })
+      });
+      addLog('AUDIT','Payments',`Paid: ${invoiceNo} → ${result.receiptNumber}`);
+      toast(`✓ ${invoiceNo} marked paid. Receipt: ${result.receiptNumber}`);
+      loadPayments(document.getElementById('pay-filter').value);
+    } else {
+      const p = DEMO.payments.find(x=>x.ID===payId);
+      if(p){ p.status='Paid'; p.paidDate=new Date().toISOString().split('T')[0]; }
+      loadPayments(); toast(`✓ ${invoiceNo} marked paid (demo).`);
+    }
+  } catch(e) { toast('Error: '+e.message); }
+}
+
+async function addPayment() {
+  const sid = document.getElementById('p-sid').value.trim();
+  const amt = document.getElementById('p-amount').value;
+  if (!sid || !amt) { toast('Student ID and Amount required'); return; }
+  let stuRef = null;
+  if (LIVE) {
+    try { const r = await od(`/Students?$filter=studentID eq '${sid}'`); stuRef = r.value[0]?.ID; } catch {}
+    if (!stuRef) { toast(`Student ${sid} not found in DB`); return; }
+  }
+  const payload = {
+    student_ID:   stuRef || DEMO.students.find(s=>s.studentID===sid)?.ID || 's-001',
+    type:         document.getElementById('p-type').value,
+    amount:       parseFloat(amt),
+    dueDate:      document.getElementById('p-due').value || new Date().toISOString().split('T')[0],
+    paymentMode:  document.getElementById('p-mode').value,
+    transactionRef: document.getElementById('p-ref').value,
+    status:       'Paid',
+  };
+  try {
+    if (LIVE) {
+      const created = await od('/Payments', { method:'POST', body: JSON.stringify(payload) });
+      addLog('AUDIT','Payments',`Invoice ${created.invoiceNumber} created — ₹${amt}`);
+      toast(`✓ ${created.invoiceNumber} recorded. FI-AR updated.`);
+      loadPayments();
+    } else {
+      const inv = 'INV-2025-' + String(DEMO.payments.length+1).padStart(4,'0');
+      DEMO.payments.unshift({ ID:'p-new-'+Date.now(), invoiceNumber:inv, student:{name:sid}, type:payload.type, amount:payload.amount, dueDate:payload.dueDate, paidDate:new Date().toISOString().split('T')[0], status:'Paid' });
+      loadPayments(); toast(`✓ ${inv} recorded (demo).`);
+    }
+    closeModal('modal-payment');
+    ['p-sid','p-amount','p-ref'].forEach(id=>document.getElementById(id).value='');
+  } catch(e) { toast('Error: '+e.message); }
+}
+
+async function addComplaint() {
+  const sid  = document.getElementById('c-sid').value.trim();
+  const room = document.getElementById('c-room').value.trim();
+  if (!sid || !room) { toast('Student ID and Room required'); return; }
+  const cat = document.getElementById('c-cat').value;
+
+  // Auto-classify via CAP action
+  let priority = document.getElementById('c-pri').value;
+  if (LIVE) {
+    try {
+      const cls = await od('/classifyComplaintPriority', { method:'POST', body: JSON.stringify({ category: cat }) });
+      priority = cls.priority;
+      toast(`Auto-classified: ${priority} priority. SLA: ${cls.slaHours}h. Assigned to: ${cls.assignTo}`);
+    } catch {}
+  }
+
+  let stuRef = null;
+  if (LIVE) {
+    try { const r = await od(`/Students?$filter=studentID eq '${sid}'`); stuRef = r.value[0]?.ID; } catch {}
+    if (!stuRef) { toast(`Student ${sid} not found`); return; }
+  }
+
+  const payload = {
+    student_ID:  stuRef || DEMO.students.find(s=>s.studentID===sid)?.ID || 's-001',
+    roomNumber:  room,
+    category:    cat,
+    priority,
+    description: document.getElementById('c-desc').value || '—',
+  };
+  try {
+    if (LIVE) {
+      const created = await od('/Complaints', { method:'POST', body: JSON.stringify(payload) });
+      addLog('WARN','Complaints',`${created.complaintID}: ${cat} → ${priority}`);
+      toast(`✓ ${created.complaintID} raised. Priority: ${priority}.`);
+      loadComplaints();
+    } else {
+      const id = 'CMP-' + String(DEMO.complaints.length+1).padStart(4,'0');
+      DEMO.complaints.unshift({ ID:'c-new-'+Date.now(), complaintID:id, category:cat, priority, description:payload.description, status:'Open', roomNumber:room, createdAt:new Date().toISOString() });
+      loadComplaints(); toast(`✓ ${id} raised (demo). Priority: ${priority}.`);
+    }
+    closeModal('modal-complaint');
+    ['c-sid','c-room','c-desc'].forEach(id=>document.getElementById(id).value='');
+  } catch(e) { toast('Error: '+e.message); }
+}
+
+async function resolveComplaint(id, cmpId) {
+  const note = prompt(`Enter resolution note for ${cmpId} (required):`);
+  if (!note?.trim()) { toast('Resolution note is required'); return; }
+  try {
+    if (LIVE) {
+      await od(`/Complaints('${id}')`, { method:'PATCH', body: JSON.stringify({ status:'Resolved', resolutionNote: note }) });
+      addLog('AUDIT','Complaints',`Resolved: ${cmpId}`);
+      toast(`✓ ${cmpId} resolved and closed.`);
+      loadComplaints();
+    } else {
+      const c = DEMO.complaints.find(x=>x.ID===id);
+      if(c) c.status='Resolved';
+      loadComplaints(); toast(`✓ ${cmpId} resolved (demo).`);
+    }
+  } catch(e) { toast('Error: '+e.message); }
+}
+
+function calcPO() {
+  const q=parseFloat(document.getElementById('po-qty').value)||0;
+  const p=parseFloat(document.getElementById('po-price').value)||0;
+  document.getElementById('po-total').value='₹'+(q*p).toLocaleString('en-IN');
+}
+
+async function addPO() {
+  const item  = document.getElementById('po-item').value.trim();
+  const qty   = parseFloat(document.getElementById('po-qty').value)||0;
+  const price = parseFloat(document.getElementById('po-price').value)||0;
+  if (!item || !qty || !price) { toast('Item, quantity and price required'); return; }
+  const vendorId = document.getElementById('po-vendor').value;
+  const payload = {
+    vendor_ID:   vendorId,
+    itemDesc:    item,
+    category:    document.getElementById('po-cat').value,
+    quantity:    qty,
+    unitPrice:   price,
+    deliveryDate: document.getElementById('po-date').value || null,
+  };
+  try {
+    if (LIVE) {
+      const created = await od('/PurchaseOrders', { method:'POST', body: JSON.stringify(payload) });
+      addLog('INFO','POs',`${created.poNumber} created — ₹${created.totalAmount}`);
+      toast(`✓ ${created.poNumber} created. Total ₹${created.totalAmount}. Awaiting GRN.`);
+      loadProcurement();
+    } else {
+      const no='PO-2025-'+String(1004+DEMO.pos.length).padStart(4,'0');
+      DEMO.pos.unshift({ ID:'po-new-'+Date.now(), poNumber:no, vendor:{name:vendorId}, itemDesc:item, totalAmount:qty*price, status:'Draft', threeWayMatch:false });
+      loadProcurement(); toast(`✓ ${no} created (demo).`);
+    }
+    closeModal('modal-po');
+    ['po-item','po-qty','po-price'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('po-total').value='₹0';
+  } catch(e) { toast('Error: '+e.message); }
+}
+
+async function addVisitor() {
+  const name = document.getElementById('v-name').value.trim();
+  const stu  = document.getElementById('v-student').value.trim();
+  if (!name || !stu) { toast('Visitor name and student required'); return; }
+  const payload = {
+    visitorName: name,
+    phone:       document.getElementById('v-phone').value,
+    roomNumber:  document.getElementById('v-room').value,
+    purpose:     document.getElementById('v-purpose').value,
+    entryTime:   new Date().toISOString(),
+    status:      'Inside',
+  };
+  try {
+    if (LIVE) {
+      await od('/Visitors', { method:'POST', body: JSON.stringify(payload) });
+      addLog('INFO','Visitors',`${name} logged in`);
+      toast(`✓ ${name} logged in.`); loadVisitors();
+    } else {
+      DEMO.visitors.unshift({ ID:'vi-new-'+Date.now(), visitorName:name, student:{name:stu}, roomNumber:payload.roomNumber, purpose:payload.purpose, entryTime:payload.entryTime, exitTime:null, status:'Inside' });
+      loadVisitors(); toast(`✓ ${name} logged (demo).`);
+    }
+    closeModal('modal-visitor');
+    ['v-name','v-phone','v-student','v-room'].forEach(id=>document.getElementById(id).value='');
+  } catch(e) { toast('Error: '+e.message); }
+}
+
+async function runAllocation() {
+  const sid = document.getElementById('al-sid').value.trim();
+  if (!sid) { toast('Enter a Student ID first'); return; }
+  try {
+    if (LIVE) {
+      const result = await od('/allocateRoom', {
+        method:'POST',
+        body: JSON.stringify({
+          studentID: sid,
+          roomType:  document.getElementById('al-type').value || null,
+          floorPref: parseInt(document.getElementById('al-floor').value)||0,
+          blockPref: document.getElementById('al-block').value || null,
+        })
+      });
+      allocData = result;
+      document.getElementById('alloc-room-title').textContent = `✓ Best match: Room ${result.roomNumber} — ${result.matchScore}% score`;
+      document.getElementById('alloc-room-detail').textContent = `${result.type} · ${result.block} · ${fmt(result.monthlyRent)}/month`;
+      addLog('INFO','Allocation',`allocateRoom → ${result.roomNumber} (${result.matchScore}%) for ${sid}`);
+    } else {
+      allocData = { roomNumber:'A-108', roomID:'r-003', matchScore:94, type:'NonAC_Double', block:'BlockA_Boys', monthlyRent:8000, studentID: sid };
+      document.getElementById('alloc-room-title').textContent = '✓ Best match: Room A-108 — 94% score (demo)';
+      document.getElementById('alloc-room-detail').textContent = 'NonAC_Double · BlockA_Boys · ₹8,000/month';
+    }
+    document.getElementById('alloc-result').style.display='block';
+  } catch(e) { toast('Allocation failed: '+e.message); addLog('ERROR','Allocation',e.message); }
+}
+
+async function confirmAllocation() {
+  if (!allocData) return;
+  try {
+    const sid = document.getElementById('al-sid').value.trim();
+    if (LIVE) {
+      const stuRes = await od(`/Students?$filter=studentID eq '${sid}'`);
+      const stuID  = stuRes.value[0]?.ID;
+      if (!stuID) { toast(`Student ${sid} not found`); return; }
+      await od(`/Students('${stuID}')`, { method:'PATCH', body: JSON.stringify({ room_ID: allocData.roomID || allocData.roomID }) });
+      addLog('AUDIT','Allocation',`Room ${allocData.roomNumber} confirmed for ${sid}`);
+      toast(`✓ Room ${allocData.roomNumber} confirmed! Fee invoice will auto-generate.`);
+      loadRooms(); loadStudents();
+    } else {
+      toast(`✓ Room ${allocData.roomNumber} confirmed for ${sid} (demo).`);
+    }
+    document.getElementById('alloc-result').style.display='none';
+    closeModal('modal-allocate');
+    allocData = null;
+  } catch(e) { toast('Error: '+e.message); }
+}
+
+async function genInvoices() {
+  const now = new Date();
+  try {
+    if (LIVE) {
+      const result = await od('/generateMonthlyInvoices', {
+        method:'POST',
+        body: JSON.stringify({ month: now.getMonth()+1, year: now.getFullYear() })
+      });
+      addLog('AUDIT','InvoiceJob',`Bulk invoices: ${result.invoicesCreated} created ₹${result.totalAmount}`);
+      toast(`✓ ${result.invoicesCreated} invoices generated. Total ₹${result.totalAmount}. ${result.skipped} skipped.`);
+      loadPayments();
+    } else {
+      toast('✓ 8 invoices generated (demo). Total ₹74,000. 2 skipped.');
+    }
+  } catch(e) { toast('Error: '+e.message); }
+}
+
+async function triggerJob(name) {
+  try {
+    if (LIVE) {
+      const r = await od('/triggerJob', { method:'POST', body: JSON.stringify({ jobName: name }) });
+      addLog('AUDIT','Scheduler',`Job ${name} triggered: ${r.details}`);
+      toast(`✓ Job '${name}' executed. Check logs.`);
+    } else {
+      addLog('INFO','Scheduler',`[Demo] Job '${name}' triggered — would run ${name === 'sla' ? 'SLA scan' : 'invoice generation'}`);
+      toast(`✓ Job '${name}' triggered (demo).`);
+    }
+  } catch(e) { toast('Error: '+e.message); }
+}
+
+// ── NAVIGATION ────────────────────────────────────────
+const loaders = {
+  dashboard:   loadDashboard,
+  students:    loadStudents,
+  rooms:       loadRooms,
+  payments:    () => loadPayments(),
+  complaints:  () => loadComplaints(),
+  procurement: loadProcurement,
+  reports:     loadReports,
+  visitors:    loadVisitors,
+  jobs:        () => {},
+};
+
+function go(page, el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.navtab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('page-'+page).classList.add('on');
+  if(el) el.classList.add('on');
+  if(loaders[page]) loaders[page]();
+}
+
+// ── MODALS ────────────────────────────────────────────
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.overlay').forEach(o =>
+  o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); })
+);
+
+// ── TOAST ─────────────────────────────────────────────
+let toastTimer;
+function toast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderLeftColor = isError ? 'var(--neg)' : 'var(--pos)';
+  t.style.display = 'block';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.style.display='none', 3500);
+}
+
+// ── BOOT ─────────────────────────────────────────────
+async function boot() {
+  addLog('INFO','App','SmartHostel BTP starting…');
+  await probe();
+  loadDashboard();
+  // Pre-populate vendor select
+  setTimeout(loadProcurement, 500);
+}
+boot();
+
+// Auto-refresh every 30s on active page
+setInterval(() => {
+  const active = document.querySelector('.page.on')?.id?.replace('page-','');
+  if(active && loaders[active] && LIVE) loaders[active]();
+}, 30000);
+</script>
+</body>
+</html>

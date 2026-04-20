@@ -1,0 +1,28 @@
+module.exports = {
+  STUDENT_ID_PREFIX: 'S',
+  STUDENT_ID_START:  1001,
+  LATE_FEE_PER_DAY:  50,
+  LATE_FEE_MAX:      500,
+  INVOICE_PREFIX:    'INV',
+  RECEIPT_PREFIX:    'RCP',
+  PO_PREFIX:         'PO',
+  SLA: { Critical: 4, High: 12, Medium: 48, Low: 120 },
+  COMPLAINT_RULES: {
+    'Electricity':       { priority: 'Critical', assignTo: 'Electrical Team',  slaKey: 'Critical' },
+    'Security':          { priority: 'Critical', assignTo: 'Security Officer', slaKey: 'Critical' },
+    'Plumbing / Water':  { priority: 'High',     assignTo: 'Plumbing Team',    slaKey: 'High'     },
+    'WiFi / Network':    { priority: 'Medium',   assignTo: 'IT Support',       slaKey: 'Medium'   },
+    'Furniture':         { priority: 'Low',      assignTo: 'Housekeeping',     slaKey: 'Low'      },
+    'Housekeeping':      { priority: 'Low',      assignTo: 'Housekeeping',     slaKey: 'Low'      },
+    'Other':             { priority: 'Low',      assignTo: 'Admin Office',     slaKey: 'Low'      },
+  },
+  ALLOC_SCORE: { BASE: 35, TYPE_MATCH: 30, FLOOR_MATCH: 15, BLOCK_MATCH: 10, AC_MATCH: 5, VACANCY: 5 },
+  LOG_LEVEL:   process.env.LOG_LEVEL || 'INFO',
+  LOG_TO_DB:   process.env.LOG_TO_DB === 'true',
+  JOBS: {
+    SLA_CHECK:        '*/10 * * * *',
+    FEE_REMINDER:     '0 9 * * *',
+    MONTHLY_INVOICES: '0 6 1 * *',
+    OCCUPANCY_REPORT: '0 8 * * 1',
+  },
+};

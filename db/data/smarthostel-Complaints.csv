@@ -1,0 +1,8 @@
+ID,complaintID,student_ID,roomNumber,category,priority,description,status,assignedTo
+c-001,CMP-0001,s-002,B-204,Electricity,Critical,Complete power outage in room since yesterday night.,Open,Electrical Team
+c-002,CMP-0002,s-004,B-112,Plumbing / Water,High,Tap leaking continuously — water on floor.,InProgress,Plumbing Team
+c-003,CMP-0003,s-001,A-101,WiFi / Network,Medium,Internet extremely slow after 9pm every day.,Open,IT Support
+c-004,CMP-0004,s-007,D-101,Furniture,Low,Chair armrest broken — need replacement.,Open,Housekeeping
+c-005,CMP-0005,s-005,A-215,Electricity,High,Ceiling fan not working since 3 days.,InProgress,Electrical Team
+c-006,CMP-0006,s-003,C-101,Plumbing / Water,Medium,Bathroom drain blocked.,Open,Plumbing Team
+c-007,CMP-0007,s-008,C-305,WiFi / Network,Low,WiFi disconnects intermittently.,Open,IT Support

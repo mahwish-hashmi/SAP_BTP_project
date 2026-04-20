@@ -1,0 +1,11 @@
+ID,studentID,name,email,phone,gender,course,year,room_ID,status,feeStatus,joiningDate
+s-001,S-1001,Aarav Sharma,aarav.sharma@kiit.ac.in,9876543210,Male,B.Tech CSE,2,r-001,Active,Paid,2023-07-15
+s-002,S-1002,Priya Singh,priya.singh@kiit.ac.in,9876543211,Female,B.Tech ECE,3,r-007,Active,Pending,2022-07-12
+s-003,S-1003,Ravi Kumar,ravi.kumar@kiit.ac.in,9876543212,Male,MBA,1,r-010,Active,Paid,2024-07-10
+s-004,S-1004,Ananya Das,ananya.das@kiit.ac.in,9876543213,Female,MCA,2,r-006,Active,Overdue,2023-07-08
+s-005,S-1005,Vikram Nair,vikram.nair@kiit.ac.in,9876543214,Male,B.Tech CSE,4,r-005,Active,Paid,2021-07-20
+s-006,S-1006,Sneha Patel,sneha.patel@kiit.ac.in,9876543215,Female,BCA,1,r-011,Active,Paid,2024-07-18
+s-007,S-1007,Arjun Mehta,arjun.mehta@kiit.ac.in,9876543216,Male,B.Tech ECE,2,r-013,Active,Pending,2023-07-15
+s-008,S-1008,Neha Joshi,neha.joshi@kiit.ac.in,9876543217,Female,MBA,1,r-012,Active,Paid,2024-07-22
+s-009,S-1009,Rohit Verma,rohit.verma@kiit.ac.in,9876543218,Male,B.Tech CSE,3,r-002,Active,Paid,2022-07-14
+s-010,S-1010,Kavya Reddy,kavya.reddy@kiit.ac.in,9876543219,Female,B.Tech ECE,1,r-006,Active,Pending,2024-07-19

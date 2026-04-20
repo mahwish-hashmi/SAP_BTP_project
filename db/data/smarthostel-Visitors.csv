@@ -1,0 +1,5 @@
+ID,visitorName,phone,student_ID,roomNumber,purpose,entryTime,exitTime,status
+vi-001,Ramesh Sharma,9111111111,s-001,A-101,Family Visit,2025-04-18T09:30:00Z,2025-04-18T11:45:00Z,Exited
+vi-002,Kavita Singh,9222222222,s-002,B-204,Family Visit,2025-04-18T10:00:00Z,,Inside
+vi-003,Rohit Friend,9333333333,s-007,D-101,Friend,2025-04-18T14:00:00Z,2025-04-18T16:30:00Z,Exited
+vi-004,Delivery Agent,9444444444,s-008,C-305,Delivery,2025-04-18T11:00:00Z,2025-04-18T11:15:00Z,Exited

@@ -1,0 +1,6 @@
+ID,vendorCode,name,category,contact,rating,status
+v-001,VEN-001,TechFix Pvt Ltd,Electrical,9800000001,5,Approved
+v-002,VEN-002,CleanSupply Co.,Housekeeping,9800000002,4,Approved
+v-003,VEN-003,AquaPure Systems,Plumbing,9800000003,3,Approved
+v-004,VEN-004,FurnishAll Ltd,Furniture,9800000004,4,Approved
+v-005,VEN-005,NetConnect ISP,Internet,9800000005,5,Approved

@@ -1,0 +1,11 @@
+ID,invoiceNumber,student_ID,type,amount,dueDate,paidDate,status,paymentMode,lateFeeApplied
+p-001,INV-2025-0001,s-001,RoomRent,8000,2025-04-05,2025-04-03,Paid,Online Transfer,0
+p-002,INV-2025-0002,s-002,RoomRent,12000,2025-04-05,,Pending,Online Transfer,0
+p-003,INV-2025-0003,s-003,RoomRent,9000,2025-04-05,2025-04-07,Paid,Cash,0
+p-004,INV-2025-0004,s-004,RoomRent,8000,2025-03-05,,Overdue,Cheque,150
+p-005,INV-2025-0005,s-005,RoomRent,9500,2025-04-05,2025-04-04,Paid,Online Transfer,0
+p-006,INV-2025-0006,s-006,MessCharges,3500,2025-04-05,2025-04-06,Paid,Online Transfer,0
+p-007,INV-2025-0007,s-007,RoomRent,16000,2025-04-05,,Pending,Online Transfer,0
+p-008,INV-2025-0008,s-008,RoomRent,9000,2025-04-05,2025-04-05,Paid,Cash,0
+p-009,INV-2025-0009,s-001,MessCharges,3500,2025-04-05,2025-04-03,Paid,Online Transfer,0
+p-010,INV-2025-0010,s-004,LateFee,150,2025-03-05,,Overdue,,150

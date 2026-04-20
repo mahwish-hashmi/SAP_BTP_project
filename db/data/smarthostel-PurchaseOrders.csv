@@ -1,0 +1,5 @@
+ID,poNumber,vendor_ID,itemDesc,category,quantity,unitPrice,totalAmount,status,deliveryDate,grnNumber,threeWayMatch
+po-001,PO-2025-1001,v-001,LED Bulbs x 50,Maintenance,50,200,10000,Delivered,2025-04-10,GRN-031,true
+po-002,PO-2025-1002,v-002,Mops and Cleaning Kit x 10,Housekeeping,10,450,4500,In Transit,2025-04-20,,false
+po-003,PO-2025-1003,v-004,Study Tables x 5,Furniture,5,5000,25000,Approved,2025-04-25,,false
+po-004,PO-2025-1004,v-003,Water Filter Annual Service,Plumbing,1,8000,8000,Pending,2025-04-30,,false
