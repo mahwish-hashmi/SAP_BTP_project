@@ -13,12 +13,15 @@
     "sqlite3": "^5.1.7"
   },
   "scripts": {
-    "start": "cds watch",
+    "start": "cds run",
     "dev": "cds watch",
     "build": "cds build --production"
   },
   "cds": {
     "requires": {
+      "auth": {
+        "kind": "mocked"
+      },
       "db": {
         "kind": "sqlite",
         "credentials": {
@@ -31,4 +34,3 @@
     }
   }
 }
-
