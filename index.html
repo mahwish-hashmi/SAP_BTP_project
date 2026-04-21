@@ -9,97 +9,421 @@
 <style>
 /* ── SAP Horizon Design Tokens ── */
 :root {
-  --sap:      #0070F2; --sap-dk:  #0040B0; --sap-lt:  #E8F2FF;
-  --shell:    #1B2742; --shell2:  #243352;
-  --pos:      #107E3E; --pos-lt:  #EAF5EE;
-  --warn:     #E67A00; --warn-lt: #FEF3E4;
-  --neg:      #BF0000; --neg-lt:  #FFEAEA;
-  --neutral:  #F5F6F8; --border:  #C8C8C8;
-  --text:     #1C2025; --muted:   #556068;
-  --mono:     'IBM Plex Mono', monospace;
-  --font:     'IBM Plex Sans', sans-serif;
-  --r:        6px; --rl: 8px;
+  --sap:     #0070F2; --sap-dk: #0040B0; --sap-lt: #E8F2FF;
+  --shell:   #1B2742; --shell2: #243352;
+  --pos:     #107E3E; --pos-lt: #EAF5EE;
+  --warn:    #E67A00; --warn-lt:#FEF3E4;
+  --neg:     #BF0000; --neg-lt: #FFEAEA;
+  --neutral: #F5F6F8; --border: #C8C8C8;
+  --text:    #1C2025; --muted:  #556068;
+  --mono:   'IBM Plex Mono', monospace;
+  --font:   'IBM Plex Sans', sans-serif;
+  --r: 6px; --rl: 8px;
+  --sidebar-w: 240px;
+  --sidebar-collapsed: 56px;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--font); background: #E8EAED; color: var(--text); font-size: 14px; }
+body { font-family: var(--font); background: #E8EAED; color: var(--text); font-size: 14px; overflow-x: hidden; }
 
-/* ── Shell ── */
+/* ════════════════════════════════════
+   SHELL BAR
+════════════════════════════════════ */
 .shellbar {
-  background: var(--shell); height: 44px;
+  background: var(--shell); height: 48px;
   display: flex; align-items: center; padding: 0 16px; gap: 12px;
-  position: sticky; top: 0; z-index: 1000;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1100;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
 }
-.sap-badge { background: #fff; color: var(--shell); font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 3px; letter-spacing: .5px; }
-.shell-title { color: rgba(255,255,255,.9); font-size: 14px; font-weight: 500; }
-.shell-sep { width: 1px; height: 20px; background: rgba(255,255,255,.15); }
-.shell-subtitle { color: rgba(255,255,255,.45); font-size: 12px; }
-.shell-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
-.conn-dot { width: 7px; height: 7px; border-radius: 50%; background: #6B7280; transition: background .3s; }
-.conn-dot.live { background: #22c55e; }
+.hamburger {
+  width: 32px; height: 32px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 5px;
+  cursor: pointer; border-radius: 4px; transition: background .15s; flex-shrink: 0;
+}
+.hamburger:hover { background: rgba(255,255,255,.12); }
+.hamburger span {
+  display: block; width: 18px; height: 2px;
+  background: rgba(255,255,255,.75); border-radius: 1px;
+  transition: all .25s cubic-bezier(.4,0,.2,1);
+}
+.sidebar-open .hamburger span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.sidebar-open .hamburger span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+.sap-badge { background: #fff; color: var(--shell); font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 3px; letter-spacing: .5px; flex-shrink:0; }
+.shell-title { color: rgba(255,255,255,.9); font-size: 14px; font-weight: 600; flex-shrink:0; }
+.shell-sep { width: 1px; height: 18px; background: rgba(255,255,255,.15); flex-shrink:0; }
+.shell-subtitle { color: rgba(255,255,255,.4); font-size: 12px; }
+.shell-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.conn-pill {
+  display: flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,.08); border-radius: 14px;
+  padding: 3px 10px 3px 8px; font-size: 11.5px; color: rgba(255,255,255,.6);
+}
+.conn-dot { width: 6px; height: 6px; border-radius: 50%; background: #6B7280; transition: background .4s; }
+.conn-dot.live { background: #22c55e; box-shadow: 0 0 6px #22c55e80; }
 .conn-dot.demo { background: #f59e0b; }
-.conn-label { font-size: 11px; color: rgba(255,255,255,.5); }
-.shell-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--sap); color: #fff; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.shell-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--sap), #00B4D8);
+  color: #fff; font-size: 11px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
 
-/* ── Navigation ── */
-.navbar { background: #fff; border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; scrollbar-width: none; }
-.navtab { padding: 11px 16px; font-size: 13px; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: all .15s; display: flex; align-items: center; gap: 6px; }
-.navtab:hover { color: var(--sap); background: var(--sap-lt); }
-.navtab.on { color: var(--sap); border-bottom-color: var(--sap); font-weight: 500; }
-.nbadge { background: var(--neg); color: #fff; font-size: 9px; padding: 1px 5px; border-radius: 8px; font-weight: 700; }
+/* ════════════════════════════════════
+   SIDEBAR
+════════════════════════════════════ */
+.sidebar {
+  position: fixed; top: 48px; left: 0; bottom: 0;
+  width: var(--sidebar-collapsed);
+  background: var(--shell2);
+  border-right: 1px solid rgba(255,255,255,.06);
+  overflow: hidden;
+  transition: width .25s cubic-bezier(.4,0,.2,1);
+  z-index: 1000;
+  display: flex; flex-direction: column;
+}
+.sidebar-open .sidebar { width: var(--sidebar-w); }
 
-/* ── Layout ── */
-.main { padding: 16px 20px; max-width: 1380px; margin: 0 auto; }
+/* Sidebar backdrop on mobile */
+.sidebar-backdrop {
+  display: none; position: fixed; inset: 0; top: 48px;
+  background: rgba(0,0,0,.45); z-index: 999;
+}
+.sidebar-open .sidebar-backdrop { display: block; }
+@media(min-width:900px) {
+  .sidebar-open .sidebar-backdrop { display: none; }
+}
+
+.sidebar-section-label {
+  padding: 16px 16px 6px;
+  font-size: 9.5px; font-weight: 700;
+  color: rgba(255,255,255,.25);
+  letter-spacing: 1.2px; text-transform: uppercase;
+  white-space: nowrap; overflow: hidden;
+  opacity: 0; transition: opacity .2s;
+}
+.sidebar-open .sidebar-section-label { opacity: 1; }
+
+.navitem {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 16px; height: 42px;
+  color: rgba(255,255,255,.6); cursor: pointer;
+  transition: all .15s; white-space: nowrap;
+  position: relative; overflow: hidden;
+  border-left: 3px solid transparent;
+}
+.navitem:hover { background: rgba(255,255,255,.08); color: rgba(255,255,255,.9); }
+.navitem.on {
+  background: rgba(0,112,242,.25);
+  color: #64AFFE;
+  border-left-color: var(--sap);
+}
+.navitem .ni-icon {
+  font-size: 16px; flex-shrink: 0; width: 20px; text-align: center;
+  /* shift left to compensate for border */
+  margin-left: -3px;
+}
+.navitem .ni-label { font-size: 13px; font-weight: 400; }
+.navitem .ni-sub { font-size: 10px; color: rgba(255,255,255,.3); margin-left: auto; flex-shrink: 0; }
+.navitem .nbadge {
+  background: var(--neg); color: #fff;
+  font-size: 9px; padding: 1px 5px; border-radius: 8px;
+  font-weight: 700; margin-left: auto; flex-shrink: 0;
+}
+
+.sidebar-divider { height: 1px; background: rgba(255,255,255,.07); margin: 6px 12px; }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 12px 16px;
+  border-top: 1px solid rgba(255,255,255,.07);
+  display: flex; align-items: center; gap: 10px;
+  white-space: nowrap; overflow: hidden;
+}
+.sidebar-footer-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--sap), #00B4D8);
+  color: #fff; font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.sidebar-footer-info { font-size: 12px; }
+.sidebar-footer-name { color: rgba(255,255,255,.8); font-weight: 500; }
+.sidebar-footer-role { color: rgba(255,255,255,.35); font-size: 11px; }
+
+/* ════════════════════════════════════
+   MAIN CONTENT AREA
+════════════════════════════════════ */
+.app-body {
+  margin-top: 48px;
+  margin-left: var(--sidebar-collapsed);
+  transition: margin-left .25s cubic-bezier(.4,0,.2,1);
+  min-height: calc(100vh - 48px);
+  width: calc(100% - var(--sidebar-collapsed));
+}
+.sidebar-open .app-body { 
+  margin-left: var(--sidebar-w);
+  width: calc(100% - var(--sidebar-w)); 
+}
+@media(max-width:900px) {
+  .sidebar-open .app-body {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+/* Page title bar */
+.page-titlebar {
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  padding: 10px 24px;
+  display: flex; align-items: center; gap: 12px;
+}
+.page-titlebar-text { font-size: 16px; font-weight: 600; color: var(--text); }
+.page-titlebar-sub { font-size: 12px; color: var(--muted); }
+.page-titlebar-breadcrumb { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+
+.main {
+  padding: 20px 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  overflow-x: hidden;
+}
 .page { display: none; } .page.on { display: block; }
 
-/* ── Status strip ── */
-.strip {
-  padding: 8px 14px; border-radius: var(--r); font-size: 12.5px;
-  display: flex; align-items: center; gap: 8px; margin-bottom: 14px;
-}
+/* ════════════════════════════════════
+   STATUS STRIPS
+════════════════════════════════════ */
+.strip { padding: 9px 14px; border-radius: var(--r); font-size: 12.5px; display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
 .strip code { background: rgba(0,0,0,.08); padding: 1px 5px; border-radius: 3px; font-family: var(--mono); font-size: 11.5px; }
-.s-info  { background: var(--sap-lt); color: var(--sap);  border: 1px solid #B5D4F4; }
-.s-ok    { background: var(--pos-lt); color: var(--pos);  border: 1px solid #A0D4B2; }
-.s-warn  { background: var(--warn-lt); color: var(--warn); border: 1px solid #FAC775; }
-.s-live  { background: #ECFDF5; color: #065f46; border: 1px solid #6EE7B7; }
-.s-demo  { background: #FFFBEB; color: #92400e; border: 1px solid #FCD34D; }
+.s-info { background: var(--sap-lt); color: var(--sap); border: 1px solid #B5D4F4; }
+.s-ok   { background: var(--pos-lt); color: var(--pos); border: 1px solid #A0D4B2; }
+.s-warn { background: var(--warn-lt); color: var(--warn); border: 1px solid #FAC775; }
+.s-live { background: #ECFDF5; color: #065f46; border: 1px solid #6EE7B7; }
+.s-demo { background: #FFFBEB; color: #92400e; border: 1px solid #FCD34D; }
 
-/* ── Cards ── */
+/* ════════════════════════════════════
+   CARDS
+════════════════════════════════════ */
 .card { background: #fff; border: 1px solid var(--border); border-radius: var(--rl); overflow: hidden; margin-bottom: 14px; }
 .ch { padding: 12px 16px; border-bottom: 1px solid #F0F0F0; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .ct { font-size: 14px; font-weight: 600; }
 .csub { font-size: 11.5px; color: var(--muted); margin-top: 1px; }
 .cb { padding: 14px 16px; }
-.cb-flush { }
 
-/* ── Grid ── */
+/* ════════════════════════════════════
+   GRIDS
+════════════════════════════════════ */
 .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
 .g4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
 @media(max-width:900px) { .g2,.g3,.g4 { grid-template-columns:1fr; } }
+.g2, .g3, .g4 {
+  width: 100%;
+}
+/* ════════════════════════════════════
+   DASHBOARD — KPI TILES (redesigned)
+════════════════════════════════════ */
+.kpi-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; margin-bottom: 20px; }
 
-/* ── KPI Tiles ── */
+.kpi-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 18px 14px;
+  position: relative; overflow: hidden;
+  transition: all .2s; cursor: pointer;
+}
+.kpi-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+.kpi-card::before {
+  content: ''; position: absolute;
+  top: 0; left: 0; right: 0; height: 4px;
+  border-radius: 10px 10px 0 0;
+}
+.kpi-card.blue::before  { background: var(--sap); }
+.kpi-card.green::before { background: var(--pos); }
+.kpi-card.amber::before { background: var(--warn); }
+.kpi-card.red::before   { background: var(--neg); }
+.kpi-card.purple::before { background: #7C3AED; }
+.kpi-card.teal::before  { background: #0891B2; }
+
+.kpi-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; margin-bottom: 12px;
+}
+.kpi-card.blue  .kpi-icon { background: var(--sap-lt); }
+.kpi-card.green .kpi-icon { background: var(--pos-lt); }
+.kpi-card.amber .kpi-icon { background: var(--warn-lt); }
+.kpi-card.red   .kpi-icon { background: var(--neg-lt); }
+.kpi-card.purple .kpi-icon { background: #F3F0FF; }
+.kpi-card.teal  .kpi-icon { background: #E0F7FA; }
+
+.kpi-val {
+  font-size: 26px; font-weight: 300;
+  font-family: var(--mono); line-height: 1; margin-bottom: 4px;
+}
+.kpi-card.blue  .kpi-val { color: var(--sap); }
+.kpi-card.green .kpi-val { color: var(--pos); }
+.kpi-card.amber .kpi-val { color: var(--warn); }
+.kpi-card.red   .kpi-val { color: var(--neg); }
+.kpi-card.purple .kpi-val { color: #7C3AED; }
+.kpi-card.teal  .kpi-val { color: #0891B2; }
+.kpi-lbl { font-size: 11.5px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.kpi-sub { font-size: 11px; color: var(--muted); }
+
+/* ════════════════════════════════════
+   DASHBOARD — WELCOME BANNER
+════════════════════════════════════ */
+.welcome-banner {
+  background: linear-gradient(135deg, var(--shell) 0%, #243A6A 50%, #1A3A5C 100%);
+  border-radius: 12px; padding: 24px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px; overflow: hidden; position: relative;
+}
+.welcome-banner::before {
+  content: ''; position: absolute;
+  right: -60px; top: -60px;
+  width: 240px; height: 240px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.04);
+}
+.welcome-banner::after {
+  content: ''; position: absolute;
+  right: 40px; bottom: -80px;
+  width: 180px; height: 180px;
+  border-radius: 50%;
+  background: rgba(0,112,242,.15);
+}
+.wb-left { z-index: 1; }
+.wb-greeting { font-size: 11px; color: rgba(255,255,255,.5); font-weight: 500; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.wb-title { font-size: 22px; font-weight: 600; color: #fff; margin-bottom: 6px; }
+.wb-sub { font-size: 13px; color: rgba(255,255,255,.55); }
+.wb-badges { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.wb-badge {
+  background: rgba(255,255,255,.1); color: rgba(255,255,255,.75);
+  font-size: 11px; padding: 3px 10px; border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.15);
+  display: flex; align-items: center; gap: 4px;
+}
+.wb-right { z-index: 1; text-align: right; }
+.wb-time { font-size: 11px; color: rgba(255,255,255,.4); margin-bottom: 4px; }
+.wb-date-big { font-size: 32px; font-weight: 300; color: rgba(255,255,255,.9); font-family: var(--mono); }
+.wb-date-sub { font-size: 12px; color: rgba(255,255,255,.4); margin-top: 2px; }
+
+/* ════════════════════════════════════
+   DASHBOARD — PROCESS BADGES
+════════════════════════════════════ */
+.process-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.proc-badge {
+  padding: 14px 16px; border-radius: 10px; border: 1px solid;
+  cursor: pointer; transition: all .18s; position: relative; overflow: hidden;
+}
+.proc-badge:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
+.proc-badge::before {
+  content: '';
+  position: absolute; top: 0; left: 0; bottom: 0;
+  width: 4px; border-radius: 2px 0 0 2px;
+}
+.pb-h2r { background: var(--sap-lt); border-color: #B5D4F4; }
+.pb-h2r::before { background: var(--sap); }
+.pb-o2c { background: var(--pos-lt); border-color: #A0D4B2; }
+.pb-o2c::before { background: var(--pos); }
+.pb-p2p { background: var(--warn-lt); border-color: #FAC775; }
+.pb-p2p::before { background: var(--warn); }
+.pb-r2r { background: #F3F0FF; border-color: #C4BAFF; }
+.pb-r2r::before { background: #7C3AED; }
+.pb-code { font-size: 10px; font-weight: 700; letter-spacing: .8px; margin-bottom: 4px; }
+.pb-title { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+.pb-desc { font-size: 11.5px; line-height: 1.4; }
+.pb-arrow { font-size: 11px; margin-top: 8px; font-weight: 500; }
+.pb-h2r .pb-code, .pb-h2r .pb-title, .pb-h2r .pb-arrow { color: var(--sap); }
+.pb-h2r .pb-desc { color: #2A5A8A; }
+.pb-o2c .pb-code, .pb-o2c .pb-title, .pb-o2c .pb-arrow { color: var(--pos); }
+.pb-o2c .pb-desc { color: #1A5C2E; }
+.pb-p2p .pb-code, .pb-p2p .pb-title, .pb-p2p .pb-arrow { color: var(--warn); }
+.pb-p2p .pb-desc { color: #6A3500; }
+.pb-r2r .pb-code, .pb-r2r .pb-title, .pb-r2r .pb-arrow { color: #7C3AED; }
+.pb-r2r .pb-desc { color: #3B2880; }
+
+/* ════════════════════════════════════
+   DASHBOARD — OCCUPANCY & ACTIVITY
+════════════════════════════════════ */
+.occ-block { display: flex; flex-direction: column; gap: 12px; }
+.occ-item { }
+.occ-item-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; font-size: 13px; }
+.occ-item-name { font-weight: 500; }
+.occ-item-count { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.pbar { background: #EDEDED; border-radius: 3px; height: 7px; overflow: hidden; }
+.pfill { height: 100%; border-radius: 3px; transition: width .6s cubic-bezier(.4,0,.2,1); }
+.pf-blue { background: var(--sap); }
+.pf-green { background: var(--pos); }
+.pf-amber { background: var(--warn); }
+.pf-red { background: var(--neg); }
+
+.activity-list { }
+.act-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 10px 16px; border-bottom: 1px solid #F5F5F5;
+  transition: background .12s;
+}
+.act-item:last-child { border-bottom: none; }
+.act-item:hover { background: #FAFAFA; }
+.act-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+.act-content { flex: 1; }
+.act-text { font-size: 13px; color: var(--text); }
+.act-meta { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.act-badge { flex-shrink: 0; }
+
+/* ════════════════════════════════════
+   DASHBOARD — QUICK ACTIONS
+════════════════════════════════════ */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.qa-btn {
+  background: #fff; border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px 16px; cursor: pointer; transition: all .18s;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+  text-align: left;
+}
+.qa-btn:hover { border-color: var(--sap); background: var(--sap-lt); transform: translateY(-1px); }
+.qa-btn:hover .qa-icon { background: var(--sap); color: #fff; }
+.qa-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--neutral); display: flex; align-items: center; justify-content: center;
+  font-size: 15px; transition: all .15s;
+}
+.qa-label { font-size: 12.5px; font-weight: 500; color: var(--text); }
+.qa-sub { font-size: 11px; color: var(--muted); }
+
+/* ════════════════════════════════════
+   OTHER EXISTING STYLES (unchanged)
+════════════════════════════════════ */
 .kgrid { display: grid; grid-template-columns: repeat(auto-fill,minmax(150px,1fr)); gap: 12px; margin-bottom: 16px; }
 .ktile { background:#fff; border:1px solid var(--border); border-radius:var(--r); padding:12px 14px; cursor:pointer; transition:all .15s; position:relative; overflow:hidden; }
 .ktile::after { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
-.ktile.blue::after { background:var(--sap); }
-.ktile.green::after { background:var(--pos); }
-.ktile.amber::after { background:var(--warn); }
-.ktile.red::after { background:var(--neg); }
+.ktile.blue::after { background:var(--sap); } .ktile.green::after { background:var(--pos); }
+.ktile.amber::after { background:var(--warn); } .ktile.red::after { background:var(--neg); }
 .ktile:hover { transform:translateY(-1px); box-shadow:0 4px 14px rgba(0,0,0,.1); }
 .kl { font-size:11px; color:var(--muted); font-weight:500; text-transform:uppercase; letter-spacing:.4px; margin-bottom:5px; }
 .kv { font-size:24px; font-weight:300; font-family:var(--mono); }
 .kv.blue { color:var(--sap); } .kv.green { color:var(--pos); } .kv.amber { color:var(--warn); } .kv.red { color:var(--neg); }
 .ks { font-size:11px; color:var(--muted); margin-top:3px; }
 
-/* ── Table ── */
 .tbl { width:100%; border-collapse:collapse; font-size:13px; table-layout:fixed; }
 .tbl th { padding:8px 12px; text-align:left; font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; border-bottom:1.5px solid var(--border); background:var(--neutral); white-space:nowrap; }
 .tbl td { padding:9px 12px; border-bottom:1px solid #F0F0F0; color:var(--text); vertical-align:middle; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .tbl tr:hover td { background:var(--sap-lt); }
 .tbl tr:last-child td { border-bottom:none; }
 
-/* ── Badges ── */
 .badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:10px; font-size:11.5px; font-weight:500; white-space:nowrap; }
 .badge::before { content:''; width:5px; height:5px; border-radius:50%; flex-shrink:0; }
 .b-pos  { background:var(--pos-lt);  color:var(--pos);  } .b-pos::before  { background:var(--pos);  }
@@ -108,10 +432,9 @@ body { font-family: var(--font); background: #E8EAED; color: var(--text); font-s
 .b-info { background:var(--sap-lt);  color:var(--sap);  } .b-info::before { background:var(--sap);  }
 .b-neu  { background:var(--neutral); color:var(--muted);} .b-neu::before  { background:var(--muted); }
 
-/* ── Buttons ── */
 .btn { display:inline-flex; align-items:center; gap:5px; padding:6px 14px; font-size:13px; font-weight:500; font-family:var(--font); border-radius:var(--r); cursor:pointer; border:1px solid; transition:all .14s; }
 .btn-p  { background:var(--sap); color:#fff; border-color:var(--sap); }
-.btn-p:hover { background:var(--sap-dk); border-color:var(--sap-dk); }
+.btn-p:hover { background:var(--sap-dk); }
 .btn-s  { background:#fff; color:var(--sap); border-color:var(--sap); }
 .btn-s:hover { background:var(--sap-lt); }
 .btn-g  { background:transparent; color:var(--muted); border-color:var(--border); }
@@ -121,7 +444,6 @@ body { font-family: var(--font); background: #E8EAED; color: var(--text); font-s
 .btn-danger { background:#fff; color:var(--neg); border-color:var(--neg); }
 .btn-sm { padding:4px 10px; font-size:12px; }
 
-/* ── Form ── */
 .fgrid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 .fgroup { display:flex; flex-direction:column; gap:4px; }
 .fgroup.span2 { grid-column:1/-1; }
@@ -134,7 +456,6 @@ input[type=text], input[type=number], input[type=date], input[type=email], input
 input:focus, select:focus, textarea:focus { border-color:var(--sap); box-shadow:0 0 0 2px rgba(0,112,242,.12); }
 textarea { resize:vertical; min-height:70px; }
 
-/* ── Process flow ── */
 .procflow { display:flex; align-items:center; overflow-x:auto; padding:8px 0; gap:0; scrollbar-width:none; }
 .pnode { display:flex; flex-direction:column; align-items:center; gap:4px; min-width:70px; }
 .pcircle { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; border:2px solid; }
@@ -146,23 +467,13 @@ textarea { resize:vertical; min-height:70px; }
 .parrow { flex:1; height:2px; min-width:16px; margin-bottom:18px; }
 .pa-done { background:var(--pos); } .pa-pend { background:var(--border); }
 
-/* ── Progress bar ── */
-.pbar { background:#EDEDED; border-radius:3px; height:6px; overflow:hidden; margin-top:4px; }
-.pfill { height:100%; border-radius:3px; transition:width .5s; }
-.pf-blue { background:var(--sap); } .pf-green { background:var(--pos); }
-.pf-amber { background:var(--warn); } .pf-red { background:var(--neg); }
-
-/* ── Complaint cards ── */
 .ccard { border:1px solid var(--border); border-radius:var(--r); padding:12px 14px; margin-bottom:9px; background:#fff; cursor:pointer; transition:all .15s; border-left:4px solid; }
 .ccard:hover { box-shadow:0 2px 12px rgba(0,0,0,.1); transform:translateX(2px); }
-.ccard.Critical { border-left-color:var(--neg); }
-.ccard.High     { border-left-color:var(--warn); }
-.ccard.Medium   { border-left-color:var(--sap); }
-.ccard.Low      { border-left-color:var(--pos); }
+.ccard.Critical { border-left-color:var(--neg); } .ccard.High { border-left-color:var(--warn); }
+.ccard.Medium { border-left-color:var(--sap); } .ccard.Low { border-left-color:var(--pos); }
 .ccard.SLABreached { animation:slapulse 1.8s infinite; }
 @keyframes slapulse { 0%,100%{box-shadow:0 0 0 0 rgba(191,0,0,0)} 50%{box-shadow:0 0 0 4px rgba(191,0,0,.2)} }
 
-/* ── Room grid ── */
 .rgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:8px; }
 .rcell { border:1.5px solid; border-radius:var(--r); padding:8px 6px; text-align:center; cursor:pointer; transition:all .15s; font-size:12px; }
 .rcell:hover { transform:scale(1.06); }
@@ -170,25 +481,21 @@ textarea { resize:vertical; min-height:70px; }
 .rcell.Vacant      { border-color:var(--pos);  background:var(--pos-lt);  color:var(--pos);  }
 .rcell.Maintenance { border-color:var(--warn); background:var(--warn-lt); color:var(--warn); }
 
-/* ── Bar chart ── */
 .barchart { display:flex; align-items:flex-end; gap:10px; height:100px; border-bottom:1px solid var(--border); padding-bottom:4px; }
 .barcol { display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; }
 .barfill { width:100%; border-radius:2px 2px 0 0; min-height:4px; transition:height .5s; }
 .barlbl { font-size:10.5px; color:var(--muted); }
 .barval { font-size:10.5px; font-weight:600; color:var(--muted); }
 
-/* ── Job cards ── */
 .jobcard { background:#fff; border:1px solid var(--border); border-radius:var(--r); padding:12px 14px; margin-bottom:9px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
 .jname { font-size:13px; font-weight:500; }
 .jcron { font-size:11px; color:var(--muted); font-family:var(--mono); margin-top:2px; }
 .running { width:7px; height:7px; border-radius:50%; background:var(--pos); animation:blink 1.2s infinite; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
 
-/* ── Log area ── */
 .logbox { background:var(--neutral); border-radius:var(--r); padding:10px 12px; font-family:var(--mono); font-size:11.5px; max-height:200px; overflow-y:auto; }
 .logline { margin-bottom:3px; line-height:1.5; }
 
-/* ── Modal ── */
 .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:2000; align-items:center; justify-content:center; }
 .overlay.open { display:flex; }
 .modal { background:#fff; border-radius:10px; width:500px; max-width:95vw; max-height:88vh; overflow-y:auto; box-shadow:0 8px 40px rgba(0,0,0,.2); animation:modIn .2s cubic-bezier(.34,1.56,.64,1); }
@@ -201,11 +508,9 @@ textarea { resize:vertical; min-height:70px; }
 .mfoot { padding:12px 20px; border-top:1px solid #F0F0F0; display:flex; gap:8px; justify-content:flex-end; }
 .minfo { background:var(--sap-lt); color:var(--sap); border-radius:var(--r); padding:8px 12px; font-size:12px; margin-bottom:14px; font-family:var(--mono); }
 
-/* ── Toast ── */
 #toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--shell); color:#fff; padding:10px 22px; border-radius:24px; font-size:13.5px; display:none; z-index:9999; white-space:nowrap; border-left:3px solid var(--pos); animation:tin .2s ease; }
 @keyframes tin { from{opacity:0;bottom:12px} to{opacity:1;bottom:24px} }
 
-/* ── Loading spinner ── */
 .spinner { display:none; text-align:center; padding:24px; color:var(--muted); font-size:13px; }
 .spin { width:20px; height:20px; border:2px solid var(--border); border-top-color:var(--sap); border-radius:50%; animation:spin .7s linear infinite; display:inline-block; margin-right:8px; vertical-align:middle; }
 @keyframes spin { to{transform:rotate(360deg)} }
@@ -217,80 +522,281 @@ textarea { resize:vertical; min-height:70px; }
 .scard { background:var(--neutral); border-radius:var(--r); padding:10px; text-align:center; }
 .sval { font-size:22px; font-weight:300; font-family:var(--mono); }
 .slbl { font-size:11px; margin-top:2px; }
+
+/* Tech stack bar */
+.tech-row { display:flex; flex-wrap:wrap; gap:7px; }
+.tech-chip { background:var(--shell); color:#90C0FF; font-size:11.5px; padding:4px 12px; border-radius:20px; display:flex; align-items:center; gap:5px; }
 </style>
 </head>
 <body>
 
 <!-- ── Shell Bar ── -->
-<div class="shellbar">
+<div class="shellbar" id="shellbar">
+  <div class="hamburger" id="hamburger" onclick="toggleSidebar()">
+    <span></span><span></span><span></span>
+  </div>
   <span class="sap-badge">SAP</span>
   <span class="shell-title">SmartHostel</span>
   <div class="shell-sep"></div>
   <span class="shell-subtitle">BTP · CAP Node.js · OData V4</span>
   <div class="shell-right">
-    <div class="conn-dot" id="connDot"></div>
-    <span class="conn-label" id="connLabel">Connecting…</span>
-    <div class="shell-avatar" title="Admin | KIIT">AD</div>
+    <div class="conn-pill">
+      <div class="conn-dot" id="connDot"></div>
+      <span id="connLabel">Connecting…</span>
+    </div>
+    <div class="shell-avatar" title="Admin | KIIT University">AD</div>
   </div>
 </div>
 
-<!-- ── Navigation ── -->
-<div class="navbar">
-  <div class="navtab on" onclick="go('dashboard',this)">⊞ Dashboard</div>
-  <div class="navtab" onclick="go('students',this)">👤 Students <span style="font-size:11px;color:var(--muted)">(H2R)</span></div>
-  <div class="navtab" onclick="go('rooms',this)">🏠 Rooms</div>
-  <div class="navtab" onclick="go('payments',this)">₹ Payments <span style="font-size:11px;color:var(--muted)">(O2C)</span></div>
-  <div class="navtab" onclick="go('complaints',this)">⚠ Complaints <span class="nbadge" id="cmp-badge">?</span></div>
-  <div class="navtab" onclick="go('procurement',this)">📦 Procurement <span style="font-size:11px;color:var(--muted)">(P2P)</span></div>
-  <div class="navtab" onclick="go('reports',this)">📊 Reports <span style="font-size:11px;color:var(--muted)">(R2R)</span></div>
-  <div class="navtab" onclick="go('visitors',this)">🪪 Visitors</div>
-  <div class="navtab" onclick="go('jobs',this)">⚙ Jobs</div>
+<!-- ── Sidebar backdrop (mobile) ── -->
+<div class="sidebar-backdrop" onclick="toggleSidebar()"></div>
+
+<!-- ── Sidebar ── -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-section-label">Main</div>
+
+  <div class="navitem on" id="nav-dashboard" onclick="go('dashboard','nav-dashboard')">
+    <span class="ni-icon">⊞</span>
+    <span class="ni-label">Dashboard</span>
+  </div>
+
+  <div class="sidebar-section-label">Management</div>
+
+  <div class="navitem" id="nav-students" onclick="go('students','nav-students')">
+    <span class="ni-icon">👤</span>
+    <span class="ni-label">Students</span>
+    <span class="ni-sub">H2R</span>
+  </div>
+  <div class="navitem" id="nav-rooms" onclick="go('rooms','nav-rooms')">
+    <span class="ni-icon">🏠</span>
+    <span class="ni-label">Rooms</span>
+  </div>
+  <div class="navitem" id="nav-payments" onclick="go('payments','nav-payments')">
+    <span class="ni-icon">₹</span>
+    <span class="ni-label">Payments</span>
+    <span class="ni-sub">O2C</span>
+  </div>
+  <div class="navitem" id="nav-complaints" onclick="go('complaints','nav-complaints')">
+    <span class="ni-icon">⚠</span>
+    <span class="ni-label">Complaints</span>
+    <span class="nbadge" id="cmp-badge">?</span>
+  </div>
+  <div class="navitem" id="nav-visitors" onclick="go('visitors','nav-visitors')">
+    <span class="ni-icon">🪪</span>
+    <span class="ni-label">Visitors</span>
+  </div>
+
+  <div class="sidebar-section-label">Finance &amp; Analytics</div>
+
+  <div class="navitem" id="nav-procurement" onclick="go('procurement','nav-procurement')">
+    <span class="ni-icon">📦</span>
+    <span class="ni-label">Procurement</span>
+    <span class="ni-sub">P2P</span>
+  </div>
+  <div class="navitem" id="nav-reports" onclick="go('reports','nav-reports')">
+    <span class="ni-icon">📊</span>
+    <span class="ni-label">Reports</span>
+    <span class="ni-sub">R2R</span>
+  </div>
+
+  <div class="sidebar-divider"></div>
+
+  <div class="navitem" id="nav-jobs" onclick="go('jobs','nav-jobs')">
+    <span class="ni-icon">⚙</span>
+    <span class="ni-label">Jobs &amp; Scheduler</span>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-footer-avatar">AD</div>
+    <div class="sidebar-footer-info">
+      <div class="sidebar-footer-name">Admin</div>
+      <div class="sidebar-footer-role">KIIT University</div>
+    </div>
+  </div>
+</nav>
+
+<!-- ── App Body ── -->
+<div class="app-body" id="appBody">
+
+<!-- Page title bar -->
+<div class="page-titlebar" id="page-titlebar">
+  <div>
+    <div class="page-titlebar-text" id="page-title-text">Dashboard</div>
+    <div class="page-titlebar-breadcrumb">
+      <span>SmartHostel BTP</span>
+      <span>›</span>
+      <span id="page-title-sub" style="color:var(--sap)">Overview</span>
+    </div>
+  </div>
 </div>
 
 <div class="main">
 
 <!-- ═══════════ DASHBOARD ═══════════ -->
 <div class="page on" id="page-dashboard">
+
+  <!-- Connection strip -->
   <div class="strip s-demo" id="conn-strip">
-    ⏳ Checking backend connection to <code>http://localhost:4004/odata/v4/HostelService/</code>…
+  ⏳ Checking backend connection to 
+  <code id="backend-url">Checking...</code>…
+</div>
+
+  <!-- Welcome Banner -->
+  <div class="welcome-banner">
+    <div class="wb-left">
+      <div class="wb-greeting">Good morning, Administrator</div>
+      <div class="wb-title">SmartHostel BTP</div>
+      <div class="wb-sub">KIIT University · SAP CAP · OData V4 · SQLite</div>
+      <div class="wb-badges">
+        <span class="wb-badge">☁ BTP Cloud Foundry</span>
+        <span class="wb-badge">⚙ CAP Node.js</span>
+        <span class="wb-badge">🗄 HANA Cloud</span>
+        <span class="wb-badge">🎨 Fiori UI5</span>
+        <span class="wb-badge">🔐 XSUAA</span>
+      </div>
+    </div>
+    <div class="wb-right">
+      <div class="wb-time" id="wb-time">Loading…</div>
+      <div class="wb-date-big" id="wb-date">—</div>
+      <div class="wb-date-sub" id="wb-daysub">—</div>
+    </div>
   </div>
 
-  <div class="kgrid" id="kpi-grid">
-    <div class="ktile blue"><div class="kl">Total Students</div><div class="kv blue" id="k-students">—</div><div class="ks">Active this semester</div></div>
-    <div class="ktile green"><div class="kl">Occupancy Rate</div><div class="kv green" id="k-occ">—</div><div class="ks">Current semester</div></div>
-    <div class="ktile amber"><div class="kl">Pending Fees</div><div class="kv amber" id="k-fees">—</div><div class="ks">Outstanding balance</div></div>
-    <div class="ktile red"><div class="kl">Open Complaints</div><div class="kv red" id="k-cmp">—</div><div class="ks">Require attention</div></div>
-    <div class="ktile green"><div class="kl">Monthly Revenue</div><div class="kv green" id="k-rev">—</div><div class="ks">April 2025</div></div>
-    <div class="ktile blue"><div class="kl">Collection Rate</div><div class="kv blue" id="k-coll">—</div><div class="ks">This month</div></div>
+  <!-- KPI Cards (new design) -->
+  <div class="kpi-row">
+    <div class="kpi-card blue" onclick="go('students','nav-students')">
+      <div class="kpi-icon">👤</div>
+      <div class="kpi-val" id="k-students">—</div>
+      <div class="kpi-lbl">Total Students</div>
+      <div class="kpi-sub">Active this semester</div>
+    </div>
+    <div class="kpi-card teal">
+      <div class="kpi-icon">🏠</div>
+      <div class="kpi-val" id="k-occ">—</div>
+      <div class="kpi-lbl">Occupancy Rate</div>
+      <div class="kpi-sub">Rooms filled</div>
+    </div>
+    <div class="kpi-card amber" onclick="go('payments','nav-payments')">
+      <div class="kpi-icon">₹</div>
+      <div class="kpi-val" id="k-fees">—</div>
+      <div class="kpi-lbl">Pending Fees</div>
+      <div class="kpi-sub">Outstanding balance</div>
+    </div>
+    <div class="kpi-card red" onclick="go('complaints','nav-complaints')">
+      <div class="kpi-icon">⚠</div>
+      <div class="kpi-val" id="k-cmp">—</div>
+      <div class="kpi-lbl">Open Complaints</div>
+      <div class="kpi-sub">Require attention</div>
+    </div>
+    <div class="kpi-card green" onclick="go('reports','nav-reports')">
+      <div class="kpi-icon">💰</div>
+      <div class="kpi-val" id="k-rev">—</div>
+      <div class="kpi-lbl">Monthly Revenue</div>
+      <div class="kpi-sub">April 2025</div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-icon">📈</div>
+      <div class="kpi-val" id="k-coll">—</div>
+      <div class="kpi-lbl">Collection Rate</div>
+      <div class="kpi-sub">This month</div>
+    </div>
   </div>
 
-  <div class="g2">
+  <!-- Quick Actions -->
+  <div style="margin-bottom:8px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Quick Actions</div>
+  <div class="quick-actions" style="margin-bottom:20px">
+    <div class="qa-btn" onclick="openModal('modal-student')">
+      <div class="qa-icon">➕</div>
+      <div class="qa-label">Onboard Student</div>
+      <div class="qa-sub">Start H2R lifecycle</div>
+    </div>
+    <div class="qa-btn" onclick="go('rooms','nav-rooms');setTimeout(()=>openModal('modal-allocate'),100)">
+      <div class="qa-icon">🏠</div>
+      <div class="qa-label">Allocate Room</div>
+      <div class="qa-sub">Smart engine</div>
+    </div>
+    <div class="qa-btn" onclick="openModal('modal-complaint')">
+      <div class="qa-icon">⚠</div>
+      <div class="qa-label">Raise Complaint</div>
+      <div class="qa-sub">Auto-priority</div>
+    </div>
+    <div class="qa-btn" onclick="openModal('modal-payment')">
+      <div class="qa-icon">₹</div>
+      <div class="qa-label">Record Payment</div>
+      <div class="qa-sub">O2C invoice</div>
+    </div>
+    <div class="qa-btn" onclick="openModal('modal-po')">
+      <div class="qa-icon">📦</div>
+      <div class="qa-label">Create PO</div>
+      <div class="qa-sub">P2P purchase order</div>
+    </div>
+    <div class="qa-btn" onclick="genInvoices()">
+      <div class="qa-icon">⚡</div>
+      <div class="qa-label">Gen Invoices</div>
+      <div class="qa-sub">Bulk monthly</div>
+    </div>
+  </div>
+
+  <!-- Occupancy + Activity -->
+  <div class="g2" style="margin-bottom:20px">
     <div class="card">
-      <div class="ch"><div class="ct">Block occupancy</div><div class="csub" id="occ-src">Loading…</div></div>
+      <div class="ch">
+        <div><div class="ct">Block occupancy</div><div class="csub" id="occ-src">Loading…</div></div>
+      </div>
       <div class="cb" id="occ-bars">
-        <div class="spinner"><span class="spin"></span>Loading rooms…</div>
+        <div class="spinner" style="display:block"><span class="spin"></span>Loading rooms…</div>
       </div>
     </div>
     <div class="card">
-      <div class="ch"><div class="ct">Recent activity</div><div class="csub">Live from Logs entity</div></div>
-      <div class="cb" id="activity-log" style="padding:0">
-        <div class="spinner" style="display:block"><span class="spin"></span>Loading…</div>
+      <div class="ch"><div class="ct">Recent activity</div><div class="csub">Live feed</div></div>
+      <div id="activity-log">
+        <div class="spinner" style="display:block;padding:20px"><span class="spin"></span>Loading…</div>
       </div>
     </div>
   </div>
 
+  <!-- SAP Process Alignment -->
+  <div style="margin-bottom:8px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">SAP Business Process Alignment</div>
+  <div class="process-grid" style="margin-bottom:20px">
+    <div class="proc-badge pb-h2r" onclick="go('students','nav-students')">
+      <div class="pb-code">H2R</div>
+      <div class="pb-title">Hire-to-Retire</div>
+      <div class="pb-desc">Student lifecycle · SAP HCM PA</div>
+      <div class="pb-arrow">→ Students module</div>
+    </div>
+    <div class="proc-badge pb-o2c" onclick="go('payments','nav-payments')">
+      <div class="pb-code">O2C</div>
+      <div class="pb-title">Order-to-Cash</div>
+      <div class="pb-desc">Fee billing · SAP FI-AR</div>
+      <div class="pb-arrow">→ Payments module</div>
+    </div>
+    <div class="proc-badge pb-p2p" onclick="go('procurement','nav-procurement')">
+      <div class="pb-code">P2P</div>
+      <div class="pb-title">Procure-to-Pay</div>
+      <div class="pb-desc">PO + GRN + 3WM · SAP MM</div>
+      <div class="pb-arrow">→ Procurement module</div>
+    </div>
+    <div class="proc-badge pb-r2r" onclick="go('reports','nav-reports')">
+      <div class="pb-code">R2R</div>
+      <div class="pb-title">Record-to-Report</div>
+      <div class="pb-desc">Month-end close · SAP FI/CO</div>
+      <div class="pb-arrow">→ Reports module</div>
+    </div>
+  </div>
+
+  <!-- Tech stack -->
   <div class="card">
     <div class="ch"><div class="ct">SAP BTP tech stack</div></div>
     <div class="cb">
-      <div style="display:flex;flex-wrap:wrap;gap:7px">
-        <span style="background:var(--shell);color:#90C0FF;font-size:11.5px;padding:4px 12px;border-radius:20px">☁ SAP BTP Cloud Foundry</span>
-        <span style="background:var(--shell);color:#90C0FF;font-size:11.5px;padding:4px 12px;border-radius:20px">⚙ SAP CAP Node.js</span>
-        <span style="background:var(--shell);color:#90C0FF;font-size:11.5px;padding:4px 12px;border-radius:20px">🗄 SAP HANA Cloud</span>
-        <span style="background:var(--shell);color:#90C0FF;font-size:11.5px;padding:4px 12px;border-radius:20px">🎨 SAP Fiori / UI5</span>
-        <span style="background:var(--shell);color:#90C0FF;font-size:11.5px;padding:4px 12px;border-radius:20px">📡 OData V4</span>
-        <span style="background:var(--shell);color:#90C0FF;font-size:11.5px;padding:4px 12px;border-radius:20px">🔐 XSUAA</span>
-        <span style="background:var(--shell);color:#90C0FF;font-size:11.5px;padding:4px 12px;border-radius:20px">📦 MTA Deploy</span>
-        <span style="background:var(--shell);color:#90C0FF;font-size:11.5px;padding:4px 12px;border-radius:20px">⏰ node-cron Jobs</span>
+      <div class="tech-row">
+        <span class="tech-chip">☁ SAP BTP Cloud Foundry</span>
+        <span class="tech-chip">⚙ SAP CAP Node.js</span>
+        <span class="tech-chip">🗄 SAP HANA Cloud</span>
+        <span class="tech-chip">🎨 SAP Fiori / UI5</span>
+        <span class="tech-chip">📡 OData V4</span>
+        <span class="tech-chip">🔐 XSUAA</span>
+        <span class="tech-chip">📦 MTA Deploy</span>
+        <span class="tech-chip">⏰ node-cron Jobs</span>
       </div>
     </div>
   </div>
@@ -829,11 +1335,189 @@ textarea { resize:vertical; min-height:70px; }
 <div id="toast"></div>
 
 <!-- ══════════════════════════════════════════════════
-     MAIN JAVASCRIPT — All OData V4 API calls live here
+
+</div><!-- /main -->
+</div><!-- /app-body -->
+
+<!-- ═══════════ MODALS ═══════════ -->
+
+<!-- Add Student -->
+<div class="overlay" id="modal-student">
+  <div class="modal">
+    <div class="mhead"><span class="mtitle">Onboard Student — H2R Start</span><span class="mclose" onclick="closeModal('modal-student')">✕</span></div>
+    <div class="mbody">
+      <div class="minfo">POST /odata/v4/HostelService/Students → BEFORE hook auto-generates Student ID</div>
+      <div class="fgrid">
+        <div class="fgroup"><label>Full Name *</label><input type="text" id="s-name" placeholder="e.g. Rahul Kumar"></div>
+        <div class="fgroup"><label>Email *</label><input type="email" id="s-email" placeholder="student@kiit.ac.in"></div>
+        <div class="fgroup"><label>Phone</label><input type="text" id="s-phone" placeholder="+91 XXXXXXXXXX"></div>
+        <div class="fgroup"><label>Gender</label><select id="s-gender"><option>Male</option><option>Female</option><option>Other</option></select></div>
+        <div class="fgroup"><label>Course *</label><select id="s-course"><option>B.Tech CSE</option><option>B.Tech ECE</option><option>MBA</option><option>MCA</option><option>BCA</option></select></div>
+        <div class="fgroup"><label>Year *</label><select id="s-year"><option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option><option value="4">4th</option></select></div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-g" onclick="closeModal('modal-student')">Cancel</button>
+      <button class="btn btn-p" onclick="addStudent()">✓ Register — Start H2R</button>
+    </div>
+  </div>
+</div>
+
+<!-- Smart Allocate Room -->
+<div class="overlay" id="modal-allocate">
+  <div class="modal">
+    <div class="mhead"><span class="mtitle">Smart Room Allocation Engine</span><span class="mclose" onclick="closeModal('modal-allocate')">✕</span></div>
+    <div class="mbody">
+      <div class="minfo">POST /allocateRoom → roomService.allocate() → scores all vacant rooms</div>
+      <div class="fgrid">
+        <div class="fgroup"><label>Student ID</label><input type="text" id="al-sid" placeholder="S-1001"></div>
+        <div class="fgroup"><label>Room Type Preference</label><select id="al-type"><option value="">No preference</option><option value="NonAC_Double">Non-AC Double</option><option value="NonAC_Single">Non-AC Single</option><option value="AC_Single">AC Single</option><option value="AC_Double">AC Double</option></select></div>
+        <div class="fgroup"><label>Floor Preference</label><select id="al-floor"><option value="0">No preference</option><option value="1">Ground Floor</option><option value="2">1st Floor</option><option value="3">2nd Floor</option></select></div>
+        <div class="fgroup"><label>Block Preference</label><select id="al-block"><option value="">No preference</option><option value="BlockA_Boys">Block A (Boys)</option><option value="BlockB_Girls">Block B (Girls)</option><option value="BlockC_PG">Block C (PG)</option><option value="BlockD_Premium">Block D (Premium)</option></select></div>
+      </div>
+      <div class="alloc-box" id="alloc-result">
+        <div style="font-size:13.5px;font-weight:600;color:var(--pos);margin-bottom:5px" id="alloc-room-title">—</div>
+        <div style="font-size:12.5px;color:#1A5C2E" id="alloc-room-detail">—</div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="btn btn-ok btn-sm" id="alloc-confirm-btn" onclick="confirmAllocation()">✓ Confirm Allocation</button>
+          <button class="btn btn-g btn-sm" onclick="document.getElementById('alloc-result').style.display='none'">✕</button>
+        </div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-g" onclick="closeModal('modal-allocate')">Cancel</button>
+      <button class="btn btn-p" onclick="runAllocation()">▶ Execute allocateRoom()</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Room -->
+<div class="overlay" id="modal-room">
+  <div class="modal">
+    <div class="mhead"><span class="mtitle">Add New Room</span><span class="mclose" onclick="closeModal('modal-room')">✕</span></div>
+    <div class="mbody">
+      <div class="fgrid">
+        <div class="fgroup"><label>Room Number *</label><input type="text" id="r-no" placeholder="A-116"></div>
+        <div class="fgroup"><label>Block *</label><select id="r-block"><option value="BlockA_Boys">Block A (Boys)</option><option value="BlockB_Girls">Block B (Girls)</option><option value="BlockC_PG">Block C (PG)</option><option value="BlockD_Premium">Block D (Premium)</option></select></div>
+        <div class="fgroup"><label>Floor</label><select id="r-floor"><option value="1">Ground (1)</option><option value="2">1st (2)</option><option value="3">2nd (3)</option></select></div>
+        <div class="fgroup"><label>Type *</label><select id="r-type"><option value="NonAC_Double">Non-AC Double</option><option value="NonAC_Single">Non-AC Single</option><option value="AC_Single">AC Single</option><option value="AC_Double">AC Double</option></select></div>
+        <div class="fgroup"><label>Capacity *</label><input type="number" id="r-cap" value="2" min="1" max="4"></div>
+        <div class="fgroup"><label>Monthly Rent (₹) *</label><input type="number" id="r-rent" placeholder="8000"></div>
+        <div class="fgroup"><label>AC Room?</label><select id="r-isac"><option value="false">No</option><option value="true">Yes</option></select></div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-g" onclick="closeModal('modal-room')">Cancel</button>
+      <button class="btn btn-p" onclick="addRoom()">✓ Add Room</button>
+    </div>
+  </div>
+</div>
+
+<!-- Record Payment -->
+<div class="overlay" id="modal-payment">
+  <div class="modal">
+    <div class="mhead"><span class="mtitle">Record Payment — O2C</span><span class="mclose" onclick="closeModal('modal-payment')">✕</span></div>
+    <div class="mbody">
+      <div class="minfo">POST /Payments → BEFORE hook: invoice number, late fee calc, status derive</div>
+      <div class="fgrid">
+        <div class="fgroup"><label>Student ID *</label><input type="text" id="p-sid" placeholder="S-1001"></div>
+        <div class="fgroup"><label>Type *</label><select id="p-type"><option>RoomRent</option><option>MessCharges</option><option>LateFee</option><option>SecurityDeposit</option></select></div>
+        <div class="fgroup"><label>Amount (₹) *</label><input type="number" id="p-amount" placeholder="8000"></div>
+        <div class="fgroup"><label>Due Date *</label><input type="date" id="p-due"></div>
+        <div class="fgroup"><label>Payment Mode</label><select id="p-mode"><option>Online Transfer</option><option>Cash</option><option>Cheque</option><option>DD</option></select></div>
+        <div class="fgroup"><label>Transaction Ref</label><input type="text" id="p-ref" placeholder="UTR / Cheque No."></div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-g" onclick="closeModal('modal-payment')">Cancel</button>
+      <button class="btn btn-p" onclick="addPayment()">✓ Record Payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- Raise Complaint -->
+<div class="overlay" id="modal-complaint">
+  <div class="modal">
+    <div class="mhead"><span class="mtitle">Raise Complaint — Auto-Priority</span><span class="mclose" onclick="closeModal('modal-complaint')">✕</span></div>
+    <div class="mbody">
+      <div class="minfo">POST /Complaints → classifyComplaintPriority() auto-sets Priority + SLA + Assignee</div>
+      <div class="fgrid">
+        <div class="fgroup"><label>Student ID *</label><input type="text" id="c-sid" placeholder="S-1001"></div>
+        <div class="fgroup"><label>Room Number *</label><input type="text" id="c-room" placeholder="A-101"></div>
+        <div class="fgroup"><label>Category *</label>
+          <select id="c-cat">
+            <option>Electricity</option><option>Plumbing / Water</option>
+            <option>WiFi / Network</option><option>Furniture</option>
+            <option>Security</option><option>Housekeeping</option><option>Other</option>
+          </select>
+        </div>
+        <div class="fgroup"><label>Priority (auto-classified)</label>
+          <select id="c-pri"><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select>
+        </div>
+        <div class="fgroup span2"><label>Description</label><textarea id="c-desc" placeholder="Describe the issue in detail…"></textarea></div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-g" onclick="closeModal('modal-complaint')">Cancel</button>
+      <button class="btn btn-p" onclick="addComplaint()">✓ Submit — Auto-classify</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create PO -->
+<div class="overlay" id="modal-po">
+  <div class="modal">
+    <div class="mhead"><span class="mtitle">Create Purchase Order — P2P</span><span class="mclose" onclick="closeModal('modal-po')">✕</span></div>
+    <div class="mbody">
+      <div class="minfo">POST /PurchaseOrders → BEFORE hook: PO number auto, totalAmount computed</div>
+      <div class="fgrid">
+        <div class="fgroup"><label>Vendor *</label><select id="po-vendor" id="po-vendor"></select></div>
+        <div class="fgroup"><label>Category</label><select id="po-cat"><option>Maintenance</option><option>Housekeeping</option><option>IT/Network</option><option>Furniture</option><option>Utilities</option></select></div>
+        <div class="fgroup span2"><label>Item Description *</label><input type="text" id="po-item" placeholder="LED Bulbs x 50"></div>
+        <div class="fgroup"><label>Quantity *</label><input type="number" id="po-qty" placeholder="50" oninput="calcPO()"></div>
+        <div class="fgroup"><label>Unit Price (₹) *</label><input type="number" id="po-price" placeholder="200" oninput="calcPO()"></div>
+        <div class="fgroup"><label>Delivery Date</label><input type="date" id="po-date"></div>
+        <div class="fgroup"><label>Total (auto-computed)</label><input type="text" id="po-total" readonly style="background:var(--neutral);font-weight:600" value="₹0"></div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-g" onclick="closeModal('modal-po')">Cancel</button>
+      <button class="btn btn-p" onclick="addPO()">✓ Create PO</button>
+    </div>
+  </div>
+</div>
+
+<!-- Log Visitor -->
+<div class="overlay" id="modal-visitor">
+  <div class="modal">
+    <div class="mhead"><span class="mtitle">Log Visitor Entry</span><span class="mclose" onclick="closeModal('modal-visitor')">✕</span></div>
+    <div class="mbody">
+      <div class="fgrid">
+        <div class="fgroup"><label>Visitor Name *</label><input type="text" id="v-name" placeholder="Full name"></div>
+        <div class="fgroup"><label>Phone</label><input type="text" id="v-phone" placeholder="+91..."></div>
+        <div class="fgroup"><label>Visiting Student *</label><input type="text" id="v-student" placeholder="Student name or ID"></div>
+        <div class="fgroup"><label>Room Number</label><input type="text" id="v-room" placeholder="A-101"></div>
+        <div class="fgroup"><label>Purpose</label><select id="v-purpose"><option>Family Visit</option><option>Friend</option><option>Official</option><option>Delivery</option><option>Other</option></select></div>
+        <div class="fgroup"><label>Entry Time</label><input type="time" id="v-time"></div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-g" onclick="closeModal('modal-visitor')">Cancel</button>
+      <button class="btn btn-p" onclick="addVisitor()">✓ Log Entry</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ══════════════════════════════════════════════════
+
+<div id="toast"></div>
+
 ══════════════════════════════════════════════════════ -->
 <script>
 // ── Config ───────────────────────────────────────────
-const BASE    = '/odata/v4/HostelService';
+const BASE = 'https://github-sap-btp-project.onrender.com/odata/v4/HostelService';
 let LIVE      = false;   // true when CAP backend is reachable
 let allocData = null;    // holds last allocation result
 let logLines  = [];
@@ -855,25 +1539,37 @@ async function od(path, opts={}) {
 
 // ── Backend health probe ──────────────────────────────
 async function probe() {
+  const dot = document.getElementById("connDot");
+  const label = document.getElementById("connLabel");
+  const strip = document.getElementById("conn-strip");
+
   try {
-    await fetch(BASE + '/$metadata', { signal: AbortSignal.timeout(2000) });
-    LIVE = true;
-    document.getElementById('connDot').className    = 'conn-dot live';
-    document.getElementById('connLabel').textContent = 'Live';
-    document.getElementById('conn-strip').className  = 'strip s-live';
-    document.getElementById('conn-strip').innerHTML  =
-      '✓ Connected to <code>http://localhost:4004/odata/v4/HostelService/</code> — SAP CAP live · SQLite DB';
-    addLog('INFO','App','Backend connected: SAP CAP OData V4 service ready');
-  } catch {
-    LIVE = false;
-    document.getElementById('connDot').className    = 'conn-dot demo';
-    document.getElementById('connLabel').textContent = 'Demo';
-    document.getElementById('conn-strip').className  = 'strip s-demo';
-    document.getElementById('conn-strip').innerHTML  =
-      '⚠ Backend offline — showing demo data. Run <code>cds watch</code> in project root then refresh.';
-    addLog('WARN','App','Backend not reachable — demo mode active');
+    console.log("Checking backend...");
+
+    const res = await fetch(BASE + '/Students', {
+      signal: AbortSignal.timeout(10000) // ⬅️ increased timeout
+    });
+
+    if (!res.ok) throw new Error("Server not ok");
+
+    dot.classList.add("live");
+    label.innerText = "Live";
+    strip.className = "strip s-live";
+    strip.innerHTML = `✅ Connected to <code>${BASE}/Students</code>`;
+
+    console.log("Backend connected ✅");
+
+  } catch (e) {
+    console.error("Backend failed ❌", e);
+
+    dot.classList.add("demo");
+    label.innerText = "Demo Mode";
+    strip.className = "strip s-demo";
+    strip.innerHTML = `⚠ Demo mode (backend slow or sleeping)`;
+
+    // optional: hide loaders
+    document.querySelectorAll(".spinner").forEach(s => s.style.display = "none");
   }
-  return LIVE;
 }
 
 // ── Logging ───────────────────────────────────────────
@@ -1006,16 +1702,7 @@ async function loadDashboard() {
   } catch(e) { addLog('ERROR','Dashboard',e.message); }
 
   // Activity (logs)
-  document.getElementById('activity-log').innerHTML = [
-    { color:'var(--pos)',  text:'Ravi Kumar — Fee ₹9,000 paid',         time:'10:32' },
-    { color:'var(--neg)',  text:'Room B-204 — Complaint CMP-0001',       time:'10:15' },
-    { color:'var(--sap)',  text:'Student S-1001 — Room A-101 allocated', time:'09:50' },
-    { color:'var(--pos)',  text:'PO-2025-1001 delivered — 3WM ✓',        time:'09:20' },
-    { color:'var(--warn)', text:'SLA Warning — CMP-0003 (2h left)',      time:'09:00' },
-  ].map(a => `<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 14px;border-bottom:1px solid #F5F5F5">
-    <div style="width:7px;height:7px;border-radius:50%;background:${a.color};margin-top:4px;flex-shrink:0"></div>
-    <div><div style="font-size:13px">${a.text}</div><div style="font-size:11.5px;color:var(--muted)">${a.time} today</div></div>
-  </div>`).join('');
+  if (typeof renderActivityFeed === 'function') renderActivityFeed();
 }
 
 async function loadStudents(q='') {
@@ -1391,7 +2078,9 @@ async function addComplaint() {
       const cls = await od('/classifyComplaintPriority', { method:'POST', body: JSON.stringify({ category: cat }) });
       priority = cls.priority;
       toast(`Auto-classified: ${priority} priority. SLA: ${cls.slaHours}h. Assigned to: ${cls.assignTo}`);
-    } catch {}
+    } catch (e) {
+  console.error("Fetch error:", e);
+}
   }
 
   let stuRef = null;
@@ -1594,11 +2283,17 @@ const loaders = {
   jobs:        () => {},
 };
 
-function go(page, el) {
+function go(page, navId) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
-  document.querySelectorAll('.navtab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.navitem').forEach(t=>t.classList.remove('on'));
   document.getElementById('page-'+page).classList.add('on');
-  if(el) el.classList.add('on');
+  const navEl = typeof navId === "string" ? document.getElementById(navId) : navId;
+  // Update page title bar
+  const pageTitles = { dashboard:['Dashboard','Overview'], students:['Students','H2R — Student Lifecycle'], rooms:['Rooms','Room Management & Allocation'], payments:['Payments','O2C — Order-to-Cash'], complaints:['Complaints','Priority Queue & SLA Engine'], procurement:['Procurement','P2P — Procure-to-Pay'], reports:['Reports','R2R — Record-to-Report'], visitors:['Visitors','Security & Access Log'], jobs:['Jobs & Scheduler','Background Automation'] };
+  const pt = pageTitles[page] || [page, ''];
+  const ptt = document.getElementById('page-title-text'); if(ptt) ptt.textContent = pt[0];
+  const pts = document.getElementById('page-title-sub');  if(pts) pts.textContent = pt[1];
+  if(navEl) navEl.classList.add("on");
   if(loaders[page]) loaders[page]();
 }
 
@@ -1620,11 +2315,67 @@ function toast(msg, isError=false) {
   toastTimer = setTimeout(() => t.style.display='none', 3500);
 }
 
+// ── SIDEBAR TOGGLE ────────────────────────────────────
+let sidebarOpen = false;
+function toggleSidebar() {
+  sidebarOpen = !sidebarOpen;
+  document.getElementById('shellbar').classList.toggle('sidebar-open', sidebarOpen);
+  document.getElementById('sidebar').classList.toggle('sidebar-open', sidebarOpen);
+  document.getElementById('appBody').classList.toggle('sidebar-open', sidebarOpen);
+  document.body.classList.toggle('sidebar-open', sidebarOpen);
+}
+
+// ── LIVE CLOCK ────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  const timeEl = document.getElementById('wb-time');
+  const dateEl = document.getElementById('wb-date');
+  const subEl  = document.getElementById('wb-daysub');
+  if (!timeEl) return;
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  timeEl.textContent = `${h}:${m}:${s}`;
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  dateEl.textContent = `${now.getDate()} ${months[now.getMonth()]}`;
+  subEl.textContent  = `${days[now.getDay()]}, ${now.getFullYear()}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── ACTIVITY FEED (redesigned) ────────────────────────
+// Override the activity-log rendering to use new act-item style
+const _origLoadDashboard = loadDashboard;
+// Patch activity rendering inside loadDashboard
+const _actItems = [
+  { color:'var(--pos)',  text:'Ravi Kumar — Fee ₹9,000 paid',          meta:'10:32 · INV-2025-0003',  badge:'Paid',    bc:'b-pos'  },
+  { color:'var(--neg)',  text:'Room B-204 — Complaint CMP-0001 raised', meta:'10:15 · Critical · Electricity', badge:'Critical', bc:'b-neg' },
+  { color:'var(--sap)',  text:'Student S-1001 — Room A-101 allocated',  meta:'09:50 · Smart Engine · Score 94%', badge:'Done', bc:'b-info' },
+  { color:'var(--pos)',  text:'PO-2025-1001 delivered — 3WM ✓',         meta:'09:20 · ₹10,000 · TechFix', badge:'Delivered', bc:'b-pos' },
+  { color:'var(--warn)', text:'SLA Warning — CMP-0003 (2h left)',        meta:'09:00 · WiFi/Network · Medium', badge:'Warning', bc:'b-warn' },
+  { color:'var(--pos)',  text:'Sneha Patel — Mess charges paid',         meta:'08:45 · INV-2025-0006 · ₹3,500', badge:'Paid', bc:'b-pos' },
+];
+function renderActivityFeed() {
+  const el = document.getElementById('activity-log');
+  if (!el) return;
+  el.innerHTML = _actItems.map(a => `
+    <div class="act-item">
+      <div class="act-dot" style="background:${a.color}"></div>
+      <div class="act-content">
+        <div class="act-text">${a.text}</div>
+        <div class="act-meta">${a.meta}</div>
+      </div>
+      <span class="badge ${a.bc}">${a.badge}</span>
+    </div>`).join('');
+}
+
 // ── BOOT ─────────────────────────────────────────────
 async function boot() {
   addLog('INFO','App','SmartHostel BTP starting…');
   await probe();
   loadDashboard();
+  renderActivityFeed();
   // Pre-populate vendor select
   setTimeout(loadProcurement, 500);
 }
@@ -1635,6 +2386,24 @@ setInterval(() => {
   const active = document.querySelector('.page.on')?.id?.replace('page-','');
   if(active && loaders[active] && LIVE) loaders[active]();
 }, 30000);
+
+// 🚀 START APP PROPERLY
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("App starting...");
+
+  document.getElementById("backend-url").innerText = BASE + "/Students";
+
+  // Check backend
+  probe();
+
+  // Optional: load dashboard immediately
+  try {
+    loadDashboard && loadDashboard();
+  } catch(e) {
+    console.log("Dashboard load skipped");
+  }
+});
+
 </script>
 </body>
 </html>
